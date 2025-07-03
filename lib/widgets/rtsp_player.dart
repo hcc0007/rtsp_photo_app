@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_vlc_player/flutter_vlc_player.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/services.dart';
 
 class RtspPlayer extends StatefulWidget {
   final String rtspUrl;
@@ -31,7 +32,7 @@ class _RtspPlayerState extends State<RtspPlayer> {
   @override
   void initState() {
     super.initState();
-    _startConnectProcess();
+    _checkInternetPermissionAndStart();
   }
 
   void _addLog(String msg) {
@@ -42,6 +43,36 @@ class _RtspPlayerState extends State<RtspPlayer> {
         _logs.removeAt(0);
       }
     });
+  }
+
+  Future<void> _checkInternetPermissionAndStart() async {
+    // Android: 检查INTERNET权限（实际上INTERNET权限是普通权限，安装时自动授予，但我们可以检测并记录）
+    bool hasPermission = true;
+    String platformMsg = '';
+    try {
+      if (Platform.isAndroid) {
+        // 通过PlatformChannel检测权限（虽然INTERNET权限一般不会被拒绝）
+        const platform = MethodChannel('rtsp_photo_app/permissions');
+        final result = await platform.invokeMethod('checkInternetPermission');
+        hasPermission = result == true;
+        platformMsg = 'Android权限检测: $hasPermission';
+      } else {
+        platformMsg = '非Android平台，无需检测INTERNET权限';
+      }
+    } catch (e) {
+      hasPermission = false;
+      platformMsg = '权限检测异常: $e';
+    }
+    _addLog('权限检测: $platformMsg');
+    if (!hasPermission) {
+      setState(() {
+        _errorMessage = '未获取INTERNET权限，无法连接视频流';
+        _status = '权限不足';
+        _connecting = false;
+      });
+      return;
+    }
+    _startConnectProcess();
   }
 
   Future<void> _startConnectProcess() async {
