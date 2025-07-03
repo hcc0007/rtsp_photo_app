@@ -1,0 +1,168 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../config/app_config.dart';
+
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  final _rtspController = TextEditingController();
+  final _apiController = TextEditingController();
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _rtspController.text = prefs.getString('rtsp_url') ?? AppConfig.defaultRtspUrl;
+      _apiController.text = prefs.getString('api_url') ?? AppConfig.defaultApiUrl;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('rtsp_url', _rtspController.text);
+    await prefs.setString('api_url', _apiController.text);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('设置已保存'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('设置'),
+        backgroundColor: Colors.grey.shade900,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            onPressed: _saveSettings,
+            icon: const Icon(Icons.save),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.grey.shade900,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'RTSP视频流配置',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _rtspController,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'RTSP地址',
+                labelStyle: const TextStyle(color: Colors.grey),
+                hintText: 'rtsp://your-rtsp-url:554/stream',
+                hintStyle: const TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.blue),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'API配置',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _apiController,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: '照片API地址',
+                labelStyle: const TextStyle(color: Colors.grey),
+                hintText: 'https://your-api-endpoint.com/photos',
+                hintStyle: const TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.blue),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            const Text(
+              '说明',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '• RTSP地址：输入您的RTSP视频流地址，支持H264编码\n'
+              '• API地址：输入获取照片列表的API接口地址\n'
+              '• API应返回字符串数组格式的照片URL列表\n'
+              '• 设置保存后需要重启应用生效',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _rtspController.dispose();
+    _apiController.dispose();
+    super.dispose();
+  }
+} 
