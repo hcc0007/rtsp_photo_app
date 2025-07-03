@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_vlc_player/flutter_vlc_player.dart';
+import 'dart:async';
+import 'dart:io';
 
 class RtspPlayer extends StatefulWidget {
   final String rtspUrl;
@@ -19,9 +21,71 @@ class _RtspPlayerState extends State<RtspPlayer> {
   bool _isInitialized = false;
   String? _errorMessage;
 
+  // 新增：日志和状态
+  List<String> _logs = [];
+  String _status = '准备连接';
+  Timer? _timeoutTimer;
+  bool _networkOk = false;
+  bool _connecting = false;
+
   @override
   void initState() {
     super.initState();
+    _startConnectProcess();
+  }
+
+  void _addLog(String msg) {
+    print(msg);
+    setState(() {
+      _logs.add(msg);
+      if (_logs.length > 10) {
+        _logs.removeAt(0);
+      }
+    });
+  }
+
+  Future<void> _startConnectProcess() async {
+    setState(() {
+      _status = '检测网络连通性...';
+      _logs.clear();
+      _networkOk = false;
+      _connecting = true;
+      _errorMessage = null;
+      _isInitialized = false;
+    });
+    _addLog('即将连接: ${widget.rtspUrl}');
+    // 1. 网络检测
+    final uri = Uri.parse(widget.rtspUrl);
+    String host = uri.host;
+    int port = uri.port > 0 ? uri.port : 554;
+    _addLog('检测网络: $host:$port');
+    try {
+      final socket = await Socket.connect(host, port, timeout: const Duration(seconds: 5));
+      socket.destroy();
+      _addLog('网络连通: $host:$port');
+      setState(() { _networkOk = true; _status = '网络正常，准备连接视频流...'; });
+    } catch (e) {
+      _addLog('网络不可达: $host:$port, 错误: $e');
+      setState(() {
+        _networkOk = false;
+        _status = '网络不可达，无法连接视频流';
+        _errorMessage = '网络不可达: $host:$port';
+        _connecting = false;
+      });
+      return;
+    }
+    // 2. 开始连接，启动超时计时器
+    _addLog('开始连接RTSP流...');
+    setState(() { _status = '正在连接视频流...'; });
+    _timeoutTimer?.cancel();
+    _timeoutTimer = Timer(const Duration(minutes: 5), () {
+      _addLog('连接超时（5分钟）');
+      setState(() {
+        _errorMessage = '连接超时（5分钟）';
+        _status = '连接超时';
+        _connecting = false;
+      });
+    });
     _initializePlayer();
   }
 
@@ -32,65 +96,70 @@ class _RtspPlayerState extends State<RtspPlayer> {
         hwAcc: HwAcc.full,
         autoPlay: true,
       );
-      
-      // 监听播放状态
       _videoPlayerController.addListener(() {
         if (mounted) {
           setState(() {
             _isPlaying = _videoPlayerController.value.isPlaying;
             _isInitialized = true;
+            if (_isPlaying) {
+              _addLog('视频流连接成功，正在播放');
+              _status = '播放中';
+              _timeoutTimer?.cancel();
+              _connecting = false;
+            } else {
+              _status = '连接中...';
+            }
           });
         }
       });
-      
     } catch (e) {
+      _addLog('初始化播放器失败: $e');
       setState(() {
         _errorMessage = '初始化播放器失败: $e';
+        _status = '初始化失败';
+        _connecting = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_errorMessage != null) {
-      return _buildErrorWidget();
-    }
-    
-    if (!_isInitialized) {
-      return _buildLoadingWidget();
-    }
-    
     return Container(
       color: Colors.black,
       child: Stack(
         children: [
-          // VLC播放器
-          VlcPlayer(
-            controller: _videoPlayerController,
-            aspectRatio: 16 / 9,
-            placeholder: _buildLoadingWidget(),
-          ),
-          
-          // 播放状态指示器
-          if (!_isPlaying)
-            Positioned(
-              top: 16,
-              right: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  '连接中...',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                  ),
-                ),
+          if (_errorMessage != null)
+            _buildErrorWidget()
+          else if (!_isInitialized)
+            _buildLoadingWidget()
+          else
+            VlcPlayer(
+              controller: _videoPlayerController,
+              aspectRatio: 16 / 9,
+              placeholder: _buildLoadingWidget(),
+            ),
+          // 状态和日志面板
+          Positioned(
+            left: 8,
+            top: 8,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              width: 320,
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('状态: $_status', style: const TextStyle(color: Colors.white, fontSize: 14)),
+                  const SizedBox(height: 4),
+                  const Text('日志:', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  ..._logs.map((e) => Text(e, style: const TextStyle(color: Colors.white70, fontSize: 11))).toList(),
+                ],
               ),
             ),
+          ),
         ],
       ),
     );
@@ -147,7 +216,7 @@ class _RtspPlayerState extends State<RtspPlayer> {
                 setState(() {
                   _errorMessage = null;
                 });
-                _initializePlayer();
+                _startConnectProcess();
               },
               child: const Text('重试'),
             ),
@@ -159,6 +228,7 @@ class _RtspPlayerState extends State<RtspPlayer> {
 
   @override
   void dispose() {
+    _timeoutTimer?.cancel();
     _videoPlayerController.dispose();
     super.dispose();
   }

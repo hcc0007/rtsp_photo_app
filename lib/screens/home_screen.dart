@@ -15,13 +15,13 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String rtspUrl = AppConfig.defaultRtspUrl;
   String apiUrl = AppConfig.defaultApiUrl;
-  
+
   @override
   void initState() {
     super.initState();
     _loadSettings();
   }
-  
+
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
       apiUrl = prefs.getString('api_url') ?? AppConfig.defaultApiUrl;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          Text('版本号: 1.0.0', style: TextStyle(color: Colors.white)),
           IconButton(
             onPressed: () async {
               await Navigator.push(
@@ -64,13 +65,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: RtspPlayer(rtspUrl: rtspUrl),
               ),
             ),
-            
+
             // 分隔线
-            Container(
-              height: 2,
-              color: Colors.grey.shade800,
-            ),
-            
+            Container(height: 2, color: Colors.grey.shade800),
+
             // 照片展示区域 - 占据屏幕下方40%
             Expanded(
               flex: 4,
@@ -88,4 +86,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-} 
+}
