@@ -48,21 +48,23 @@ class _SenseImageState extends State<SenseImage> {
       return;
     }
 
-    final url = '${widget._apiClient.baseUrl}/gateway/sys/api/v1/images/${widget.objectKey}';
-    final authInfo = Provider.of<AuthProvider>(
-      context,
-      listen: false,
-    ).authService;
-    final token = authInfo.token;
+    // final url = 'http://localhost:3000/gateway/sys/api/v1/images/${widget.objectKey}';
+    final url = 'http://localhost:3000/gateway/sys/api/v1/images/22/22';
+    // final authInfo = Provider.of<AuthProvider>(
+    //   context,
+    //   listen: false,
+    // ).authService;
+    // final token = authInfo.token;
+    final token = '1234567890';
     
-    if (token == null || token.isEmpty) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = '未登录或token无效';
-      });
-      _logger.warning('图片加载失败：未登录或token无效');
-      return;
-    }
+    // if (token == null || token.isEmpty) {
+    //   setState(() {
+    //     _isLoading = false;
+    //     _errorMessage = '未登录或token无效';
+    //   });
+    //   _logger.warning('图片加载失败：未登录或token无效');
+    //   return;
+    // }
 
     final headers = {ApiClient.tokenKey: token};
     final ts = DateTime.now().millisecondsSinceEpoch;

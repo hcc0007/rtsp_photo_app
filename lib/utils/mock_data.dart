@@ -6,7 +6,6 @@ class MockData {
   static List<PushData> getMockPushData() {
     return [
       PushData(
-        imgUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
         name: '张三',
         serialNumber: 'SN001',
         objectId: 'obj001',
@@ -74,6 +73,11 @@ class MockData {
             featureDbId: 'feature001',
             type: 1,
             name: '人员库1',
+            enableState: 1,
+            activeState: 1,
+            activationTime: 0,
+            expirationTime: 0,
+            createTime: 0,
           ),
           portrait: Portrait(
             name: '张三',
@@ -105,7 +109,6 @@ class MockData {
         ),
       ),
       PushData(
-        imgUrl: 'https://randomuser.me/api/portraits/women/2.jpg',
         name: '李四',
         serialNumber: 'SN002',
         objectId: 'obj002',
@@ -173,6 +176,11 @@ class MockData {
             featureDbId: 'feature001',
             type: 1,
             name: '人员库1',
+            enableState: 1,
+            activeState: 1,
+            activationTime: 0,
+            expirationTime: 0,
+            createTime: 0,
           ),
           portrait: Portrait(
             name: '李四',
@@ -204,7 +212,6 @@ class MockData {
         ),
       ),
       PushData(
-        imgUrl: 'https://randomuser.me/api/portraits/men/3.jpg',
         name: '王五',
         serialNumber: 'SN003',
         objectId: 'obj003',
@@ -272,6 +279,11 @@ class MockData {
             featureDbId: 'feature001',
             type: 1,
             name: '人员库1',
+            enableState: 1,
+            activeState: 1,
+            activationTime: 0,
+            expirationTime: 0,
+            createTime: 0,
           ),
           portrait: Portrait(
             name: '王五',
@@ -303,7 +315,6 @@ class MockData {
         ),
       ),
       PushData(
-        imgUrl: 'https://randomuser.me/api/portraits/women/4.jpg',
         name: '陌生人',
         serialNumber: 'SN004',
         objectId: 'obj004',
@@ -371,6 +382,11 @@ class MockData {
             featureDbId: '',
             type: 0,
             name: '',
+            enableState: 0,
+            activeState: 0,
+            activationTime: 0,
+            expirationTime: 0,
+            createTime: 0,
           ),
           portrait: Portrait(),
         ),
@@ -395,7 +411,6 @@ class MockData {
         ),
       ),
       PushData(
-        imgUrl: 'https://randomuser.me/api/portraits/men/5.jpg',
         name: '已知人员',
         serialNumber: 'SN005',
         objectId: 'obj005',
@@ -463,6 +478,11 @@ class MockData {
             featureDbId: 'feature001',
             type: 1,
             name: '人员库1',
+            enableState: 1,
+            activeState: 1,
+            activationTime: 0,
+            expirationTime: 0,
+            createTime: 0,
           ),
           portrait: Portrait(
             name: '已知人员',
@@ -494,7 +514,6 @@ class MockData {
         ),
       ),
       PushData(
-        imgUrl: '',
         name: '无图人员',
         serialNumber: 'SN006',
         objectId: 'obj006',
@@ -558,6 +577,11 @@ class MockData {
             featureDbId: '',
             type: 0,
             name: '',
+            enableState: 0,
+            activeState: 0,
+            activationTime: 0,
+            expirationTime: 0,
+            createTime: 0,
           ),
           portrait: Portrait(),
         ),

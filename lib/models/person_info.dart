@@ -49,19 +49,19 @@ class PersonInfo {
 
   factory PersonInfo.fromJson(Map<String, dynamic> json) {
     return PersonInfo(
-      serialNumber: json['serialNumber'] ?? '',
-      objectId: json['objectId'] ?? '',
-      eventId: json['eventId'] ?? '',
-      dataType: json['dataType'] ?? '',
-      recordType: json['recordType'] ?? '',
-      platformType: json['platformType'] ?? '',
+      serialNumber: json['serialNumber']?.toString() ?? '',
+      objectId: json['objectId']?.toString() ?? '',
+      eventId: json['eventId']?.toString() ?? '',
+      dataType: json['dataType']?.toString() ?? '',
+      recordType: json['recordType']?.toString() ?? '',
+      platformType: json['platformType']?.toString() ?? '',
       portraitImage: PortraitImage.fromJson(json['portraitImage'] ?? {}),
       panoramicImage: PanoramicImage.fromJson(json['panoramicImage'] ?? {}),
-      capturedTime: json['capturedTime'] ?? 0,
-      receivedTime: json['receivedTime'] ?? 0,
-      createTime: json['createTime'] ?? 0,
+      capturedTime: int.tryParse(json['capturedTime']?.toString() ?? '0') ?? 0,
+      receivedTime: int.tryParse(json['receivedTime']?.toString() ?? '0') ?? 0,
+      createTime: int.tryParse(json['createTime']?.toString() ?? '0') ?? 0,
       viewInfo: ViewInfo.fromJson(json['viewInfo'] ?? {}),
-      score: (json['score'] ?? 0).toDouble(),
+      score: double.tryParse(json['score']?.toString() ?? '0') ?? 0.0,
       deviceInfo: DeviceInfo.fromJson(json['deviceInfo'] ?? {}),
       taskInfo: TaskInfo.fromJson(json['taskInfo'] ?? {}),
       stackeds:
@@ -224,15 +224,15 @@ class Device {
 
   factory Device.fromJson(Map<String, dynamic> json) {
     return Device(
-      identifierId: json['identifierId'] ?? '',
-      deviceName: json['deviceName'] ?? '',
-      deviceCode: json['deviceCode'] ?? '',
-      platformIdentifierId: json['platformIdentifierId'] ?? '',
-      platformType: json['platformType'] ?? '',
-      deviceType: json['deviceType'] ?? '',
-      position: json['position'] ?? '',
-      rtspAddress: json['rtspAddress'] ?? '',
-      rtspDeputyAddress: json['rtspDeputyAddress'] ?? '',
+      identifierId: json['identifierId']?.toString() ?? '',
+      deviceName: json['deviceName']?.toString() ?? '',
+      deviceCode: json['deviceCode']?.toString() ?? '',
+      platformIdentifierId: json['platformIdentifierId']?.toString() ?? '',
+      platformType: json['platformType']?.toString() ?? '',
+      deviceType: json['deviceType']?.toString() ?? '',
+      position: json['position']?.toString() ?? '',
+      rtspAddress: json['rtspAddress']?.toString() ?? '',
+      rtspDeputyAddress: json['rtspDeputyAddress']?.toString() ?? '',
     );
   }
 }
@@ -254,11 +254,11 @@ class DeviceGroup {
 
   factory DeviceGroup.fromJson(Map<String, dynamic> json) {
     return DeviceGroup(
-      identifierId: json['identifierId'] ?? '',
-      name: json['name'] ?? '',
-      mapUrl: json['mapUrl'] ?? '',
-      mapWidth: json['mapWidth'] ?? 0,
-      mapHeight: json['mapHeight'] ?? 0,
+      identifierId: json['identifierId']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      mapUrl: json['mapUrl']?.toString() ?? '',
+      mapWidth: int.tryParse(json['mapWidth']?.toString() ?? '0') ?? 0,
+      mapHeight: int.tryParse(json['mapHeight']?.toString() ?? '0') ?? 0,
     );
   }
 }
@@ -292,10 +292,10 @@ class Task {
 
   factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
-      taskId: json['taskId'] ?? '',
-      taskName: json['taskName'] ?? '',
-      taskType: json['taskType'] ?? '',
-      detectType: json['detectType'] ?? '',
+      taskId: json['taskId']?.toString() ?? '',
+      taskName: json['taskName']?.toString() ?? '',
+      taskType: json['taskType']?.toString() ?? '',
+      detectType: json['detectType']?.toString() ?? '',
     );
   }
 }
@@ -321,16 +321,22 @@ class Roi {
 
   factory Roi.fromJson(Map<String, dynamic> json) {
     return Roi(
-      ruleId: json['ruleId'] ?? '',
-      roiId: json['roiId'],
-      roiNum: json['roiNum'] ?? '',
-      roiName: json['roiName'] ?? '',
-      roiType: json['roiType'],
-      extendJson: json['extendJson'],
-      verticeList:
-          (json['verticeList'] as List<dynamic>?)
-              ?.map((e) => Map<String, dynamic>.from(e).map((k, v) => MapEntry(k, v is int ? v : int.tryParse(v.toString()) ?? 0)))
-              .toList() ??
+      ruleId: json['ruleId']?.toString() ?? '',
+      roiId: json['roiId']?.toString(),
+      roiNum: json['roiNum']?.toString() ?? '',
+      roiName: json['roiName']?.toString() ?? '',
+      roiType: json['roiType']?.toString(),
+      extendJson: json['extendJson']?.toString(),
+      verticeList: (json['verticeList'] as List<dynamic>?)
+          ?.map(
+            (e) => Map<String, dynamic>.from(e).map(
+              (k, v) => MapEntry(
+                k,
+                v is int ? v : int.tryParse(v.toString()) ?? 0,
+              ),
+            ),
+          )
+          .toList() ??
           [],
     );
   }
@@ -351,10 +357,10 @@ class Stacked {
 
   factory Stacked.fromJson(Map<String, dynamic> json) {
     return Stacked(
-      width: json['width'] ?? 0,
-      top: json['top'] ?? 0,
-      left: json['left'] ?? 0,
-      height: json['height'] ?? 0,
+      width: int.tryParse(json['width']?.toString() ?? '0') ?? 0,
+      top: int.tryParse(json['top']?.toString() ?? '0') ?? 0,
+      left: int.tryParse(json['left']?.toString() ?? '0') ?? 0,
+      height: int.tryParse(json['height']?.toString() ?? '0') ?? 0,
     );
   }
 }
@@ -378,10 +384,10 @@ class Particular {
 
   factory Particular.fromJson(Map<String, dynamic> json) {
     return Particular(
-      score: (json['score'] ?? 0).toDouble(),
-      mask: json['mask'] ?? '',
-      helmet: json['helmet'] ?? '',
-      associationId: json['associationId'] ?? '',
+      score: double.tryParse(json['score']?.toString() ?? '0') ?? 0.0,
+      mask: json['mask']?.toString() ?? '',
+      helmet: json['helmet']?.toString() ?? '',
+      associationId: json['associationId']?.toString() ?? '',
       portraitDb: PortraitDb.fromJson(json['portraitDb'] ?? {}),
       portrait: Portrait.fromJson(json['portrait'] ?? {}),
     );
@@ -396,6 +402,11 @@ class PortraitDb {
   final String featureDbId;
   final int type;
   final String name;
+  final int enableState;
+  final int activeState;
+  final int activationTime;
+  final int expirationTime;
+  final int createTime;
 
   PortraitDb({
     required this.portraitDbId,
@@ -405,22 +416,33 @@ class PortraitDb {
     required this.featureDbId,
     required this.type,
     required this.name,
+    required this.enableState,
+    required this.activeState,
+    required this.activationTime,
+    required this.expirationTime,
+    required this.createTime,
   });
 
   factory PortraitDb.fromJson(Map<String, dynamic> json) {
     return PortraitDb(
-      portraitDbId: json['portraitDbId'] ?? 0,
+      portraitDbId: int.tryParse(json['portraitDbId']?.toString() ?? '0') ?? 0,
       identifierId: json['identifierId'] ?? '',
       libId: json['libId'] ?? '',
       libImportType: json['libImportType'] ?? '',
       featureDbId: json['featureDbId'] ?? '',
-      type: json['type'] ?? 0,
+      type: int.tryParse(json['type']?.toString() ?? '0') ?? 0,
       name: json['name'] ?? '',
+      enableState: int.tryParse(json['enableState']?.toString() ?? '0') ?? 0,
+      activeState: int.tryParse(json['activeState']?.toString() ?? '0') ?? 0,
+      activationTime: int.tryParse(json['activationTime']?.toString() ?? '0') ?? 0,
+      expirationTime: int.tryParse(json['expirationTime']?.toString() ?? '0') ?? 0,
+      createTime: int.tryParse(json['createTime']?.toString() ?? '0') ?? 0,
     );
   }
 }
 
 class Portrait {
+  final int? portraitId;
   final String? identifierId;
   final String? identity;
   final String? name;
@@ -437,6 +459,7 @@ class Portrait {
   final String? activeState;
 
   Portrait({
+    this.portraitId,
     this.identifierId,
     this.identity,
     this.name,
@@ -455,20 +478,21 @@ class Portrait {
 
   factory Portrait.fromJson(Map<String, dynamic> json) {
     return Portrait(
-      identifierId: json['identifierId'],
-      identity: json['identity'],
-      name: json['name'],
-      gender: json['gender'],
-      phone: json['phone'],
-      company: json['company'],
-      dept: json['dept'],
-      employeeNumber: json['employeeNumber'],
-      idNumber: json['idNumber'],
-      remark: json['remark'],
-      picUrl: json['picUrl'],
-      activationTime: json['activationTime'],
-      expirationTime: json['expirationTime'],
-      activeState: json['activeState'],
+      portraitId: json['portraitId'],
+      identifierId: json['identifierId']?.toString(),
+      identity: json['identity']?.toString(),
+      name: json['name']?.toString(),
+      gender: json['gender']?.toString(),
+      phone: json['phone']?.toString(),
+      company: json['company']?.toString(),
+      dept: json['dept']?.toString(),
+      employeeNumber: json['employeeNumber']?.toString(),
+      idNumber: json['idNumber']?.toString(),
+      remark: json['remark']?.toString(),
+      picUrl: json['picUrl']?.toString(),
+      activationTime: json['activationTime']?.toString(),
+      expirationTime: json['expirationTime']?.toString(),
+      activeState: json['activeState']?.toString(),
     );
   }
 }
@@ -536,7 +560,14 @@ class Face {
       angle: Angle.fromJson(json['angle'] ?? {}),
       landmarks:
           (json['landmarks'] as List<dynamic>?)
-              ?.map((e) => Map<String, dynamic>.from(e).map((k, v) => MapEntry(k, v is int ? v : int.tryParse(v.toString()) ?? 0)))
+              ?.map(
+                (e) => Map<String, dynamic>.from(e).map(
+                  (k, v) => MapEntry(
+                    k,
+                    v is int ? v : int.tryParse(v.toString()) ?? 0,
+                  ),
+                ),
+              )
               .toList() ??
           [],
       attributesWithScore: (json['attributes_with_score'] is Map
@@ -570,16 +601,21 @@ class Rectangle {
     return Rectangle(
       vertices:
           (json['vertices'] as List<dynamic>?)
-              ?.map((e) => Map<String, dynamic>.from(e).map((k, v) => MapEntry(k, v is int ? v : int.tryParse(v.toString()) ?? 0)))
+              ?.map(
+                (e) => Map<String, dynamic>.from(e).map(
+                  (k, v) => MapEntry(
+                    k,
+                    v is int ? v : int.tryParse(v.toString()) ?? 0,
+                  ),
+                ),
+              )
               .toList() ??
           [],
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'vertices': vertices,
-    };
+    return {'vertices': vertices};
   }
 }
 
@@ -599,11 +635,7 @@ class Angle {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'yaw': yaw,
-      'pitch': pitch,
-      'roll': roll,
-    };
+    return {'yaw': yaw, 'pitch': pitch, 'roll': roll};
   }
 }
 
@@ -655,10 +687,7 @@ class PanoramicImageSize {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'width': width,
-      'height': height,
-    };
+    return {'width': width, 'height': height};
   }
 }
 
@@ -671,16 +700,21 @@ class PortraitImageInPanoramic {
     return PortraitImageInPanoramic(
       vertices:
           (json['vertices'] as List<dynamic>?)
-              ?.map((e) => Map<String, dynamic>.from(e).map((k, v) => MapEntry(k, v is int ? v : int.tryParse(v.toString()) ?? 0)))
+              ?.map(
+                (e) => Map<String, dynamic>.from(e).map(
+                  (k, v) => MapEntry(
+                    k,
+                    v is int ? v : int.tryParse(v.toString()) ?? 0,
+                  ),
+                ),
+              )
               .toList() ??
           [],
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'vertices': vertices,
-    };
+    return {'vertices': vertices};
   }
 }
 
@@ -693,15 +727,20 @@ class PortraitInPanoramic {
     return PortraitInPanoramic(
       vertices:
           (json['vertices'] as List<dynamic>?)
-              ?.map((e) => Map<String, dynamic>.from(e).map((k, v) => MapEntry(k, v is int ? v : int.tryParse(v.toString()) ?? 0)))
+              ?.map(
+                (e) => Map<String, dynamic>.from(e).map(
+                  (k, v) => MapEntry(
+                    k,
+                    v is int ? v : int.tryParse(v.toString()) ?? 0,
+                  ),
+                ),
+              )
               .toList() ??
           [],
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'vertices': vertices,
-    };
+    return {'vertices': vertices};
   }
 }

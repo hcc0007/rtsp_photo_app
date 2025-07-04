@@ -15,11 +15,11 @@ class UserInfo {
 
   factory UserInfo.fromJson(Map<String, dynamic> json) {
     return UserInfo(
-      userId: json['userId'] ?? 0,
-      username: json['username'] ?? '',
-      token: json['token'] ?? '',
-      nickname: json['nickname'] ?? '',
-      avatar: json['avatar'] ?? '',
+      userId: int.tryParse(json['userId']?.toString() ?? '0') ?? 0,
+      username: json['username']?.toString() ?? '',
+      token: json['token']?.toString() ?? '',
+      nickname: json['nickname']?.toString() ?? '',
+      avatar: json['avatar']?.toString() ?? '',
     );
   }
 

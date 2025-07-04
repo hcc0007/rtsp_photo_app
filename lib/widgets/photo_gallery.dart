@@ -6,6 +6,10 @@ import '../models/person_info.dart';
 import '../providers/push_provider.dart';
 import '../services/push_server_service.dart';
 import '../widgets/sense_image.dart';
+import 'dart:developer' as developer;
+import 'package:logging/logging.dart';
+
+final _logger = Logger('PhotoGallery');
 
 class FaceCard extends StatelessWidget {
   final PushData pushData;
@@ -16,7 +20,7 @@ class FaceCard extends StatelessWidget {
     final imageUrl = pushData.portraitImage.url;
     final name = pushData.name;
     final recordType = pushData.recordType;
-    
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
@@ -39,10 +43,7 @@ class FaceCard extends StatelessWidget {
             height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white,
-                width: 2,
-              ),
+              border: Border.all(color: Colors.white, width: 2),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.2),
@@ -61,7 +62,7 @@ class FaceCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          
+
           // 姓名
           Text(
             name,
@@ -73,9 +74,9 @@ class FaceCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          
+
           const SizedBox(height: 4),
-          
+
           // 人脸类型标签
           Container(
             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -92,9 +93,9 @@ class FaceCard extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 4),
-          
+
           // 时间信息
           Text(
             PersonInfo.formatTime(pushData.capturedTime),
@@ -107,7 +108,7 @@ class FaceCard extends StatelessWidget {
       ),
     );
   }
-  
+
   Color _getRecordTypeColor(String recordType) {
     switch (recordType) {
       case 'portrait_stranger':
@@ -128,6 +129,9 @@ class PhotoGallery extends StatefulWidget {
 }
 
 class _PhotoGalleryState extends State<PhotoGallery> {
+  // 调试模式，开发时可以设为 true
+  static const bool _debugMode = false;
+
   @override
   Widget build(BuildContext context) {
     final pushProvider = Provider.of<PushProvider>(context);
@@ -136,11 +140,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Colors.red[900]!,
-            Colors.red[800]!,
-            Colors.red[700]!,
-          ],
+          colors: [Colors.red[900]!, Colors.red[800]!, Colors.red[700]!],
         ),
       ),
       child: StreamBuilder<Map<String, dynamic>>(
@@ -148,19 +148,36 @@ class _PhotoGalleryState extends State<PhotoGallery> {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final newData = snapshot.data!;
-            final pushData = PushData.fromJson(newData);
-            bool exists = pushProvider.pushData.any(
-              (item) =>
-                  item.objectId == pushData.objectId &&
-                  item.createTime == pushData.createTime,
-            );
-            if (!exists) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                Provider.of<PushProvider>(
-                  context,
-                  listen: false,
-                ).addPushData(pushData);
-              });
+            try {
+              final pushData = PushData.fromJson(newData);
+              bool exists = pushProvider.pushData.any(
+                (item) =>
+                    item.objectId == pushData.objectId &&
+                    item.createTime == pushData.createTime,
+              );
+              if (!exists) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  Provider.of<PushProvider>(
+                    context,
+                    listen: false,
+                  ).addPushData(pushData);
+                });
+              }
+            } catch (e) {
+              // 静默处理解析错误，不显示错误界面，继续显示现有数据
+              _logger.severe('人脸推送数据 解析失败: $e');
+              _logger.severe('原始数据: $newData');
+
+              // 调试模式下显示错误信息
+              if (_debugMode) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('数据解析失败: $e'),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
             }
           }
 
@@ -212,11 +229,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.face,
-                        color: Colors.white,
-                        size: 24,
-                      ),
+                      Icon(Icons.face, color: Colors.white, size: 24),
                       const SizedBox(width: 8),
                       Text(
                         '人脸推送记录',
@@ -228,7 +241,10 @@ class _PhotoGalleryState extends State<PhotoGallery> {
                       ),
                       const Spacer(),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
@@ -245,7 +261,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
                     ],
                   ),
                 ),
-                
+
                 // 人脸卡片列表
                 Expanded(
                   child: SingleChildScrollView(
@@ -272,11 +288,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Colors.red[900]!,
-            Colors.red[800]!,
-            Colors.red[700]!,
-          ],
+          colors: [Colors.red[900]!, Colors.red[800]!, Colors.red[700]!],
         ),
       ),
       child: const Center(
@@ -303,11 +315,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Colors.red[900]!,
-            Colors.red[800]!,
-            Colors.red[700]!,
-          ],
+          colors: [Colors.red[900]!, Colors.red[800]!, Colors.red[700]!],
         ),
       ),
       child: Center(
@@ -347,11 +355,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Colors.red[900]!,
-            Colors.red[800]!,
-            Colors.red[700]!,
-          ],
+          colors: [Colors.red[900]!, Colors.red[800]!, Colors.red[700]!],
         ),
       ),
       child: const Center(
@@ -360,10 +364,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
           children: [
             Icon(Icons.people_outline, color: Colors.white, size: 48),
             SizedBox(height: 16),
-            Text(
-              '暂无人群信息',
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
+            Text('暂无人群信息', style: TextStyle(color: Colors.white, fontSize: 16)),
           ],
         ),
       ),
