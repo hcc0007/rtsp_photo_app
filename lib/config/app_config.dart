@@ -20,9 +20,6 @@ class AppConfig {
   // RTSP配置
   static const String defaultRtspUrl = 'rtsp://192.168.3.169:8554/mystream';
   
-  // API配置
-  static const String defaultApiUrl = 'https://your-api-endpoint.com/photos';
-  
   // 认证配置
   static const String defaultUsername = 'ops';
   static const String defaultPassword = 'Test@001';
