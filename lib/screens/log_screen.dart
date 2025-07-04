@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'dart:async';
-import 'dart:io';
 import '../utils/global_log_manager.dart';
 
 class LogScreen extends StatefulWidget {

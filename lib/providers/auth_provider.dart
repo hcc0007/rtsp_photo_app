@@ -197,6 +197,12 @@ class AuthProvider with ChangeNotifier {
     _clearError();
   }
 
+  // 重新初始化认证服务（用于设置更改后）
+  Future<void> reinitialize() async {
+    _logger.info('重新初始化认证服务');
+    await _authService.reinitialize();
+  }
+
   // 启动token刷新定时器
   void _startTokenRefreshTimer() async {
     _stopTokenRefreshTimer(); // 先停止之前的定时器

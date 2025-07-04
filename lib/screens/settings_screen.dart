@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import '../config/app_config.dart';
+import '../providers/auth_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,6 +17,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _rtspController = TextEditingController();
   final _apiController = TextEditingController();
   final _tokenRefreshController = TextEditingController();
+  final _personFilterTimeController = TextEditingController();
+  final _knownPersonDisplayController = TextEditingController();
+  final _strangerDisplayController = TextEditingController();
+  final _recordTypeStrangerController = TextEditingController();
+  final _recordTypeKnownController = TextEditingController();
   bool _isLoading = true;
 
   @override
@@ -31,6 +38,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _rtspController.text = prefs.getString('rtsp_url') ?? AppConfig.defaultRtspUrl;
       _apiController.text = prefs.getString('api_url') ?? AppConfig.defaultApiUrl;
       _tokenRefreshController.text = (prefs.getInt('token_refresh_interval') ?? AppConfig.tokenRefreshInterval).toString();
+      _personFilterTimeController.text = (prefs.getInt('person_filter_time_window') ?? AppConfig.personFilterTimeWindow).toString();
+      _knownPersonDisplayController.text = (prefs.getInt('known_person_display_time') ?? AppConfig.knownPersonDisplayTime).toString();
+      _strangerDisplayController.text = (prefs.getInt('stranger_display_time') ?? AppConfig.strangerDisplayTime).toString();
+      _recordTypeStrangerController.text = prefs.getString('record_type_stranger') ?? AppConfig.recordTypeStranger;
+      _recordTypeKnownController.text = prefs.getString('record_type_known') ?? AppConfig.recordTypeKnown;
       _isLoading = false;
     });
   }
@@ -46,10 +58,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final tokenRefreshInterval = int.tryParse(_tokenRefreshController.text) ?? AppConfig.tokenRefreshInterval;
     await prefs.setInt('token_refresh_interval', tokenRefreshInterval);
     
+    // 保存人脸推送过滤配置
+    final personFilterTime = int.tryParse(_personFilterTimeController.text) ?? AppConfig.personFilterTimeWindow;
+    final knownPersonDisplay = int.tryParse(_knownPersonDisplayController.text) ?? AppConfig.knownPersonDisplayTime;
+    final strangerDisplay = int.tryParse(_strangerDisplayController.text) ?? AppConfig.strangerDisplayTime;
+    await prefs.setInt('person_filter_time_window', personFilterTime);
+    await prefs.setInt('known_person_display_time', knownPersonDisplay);
+    await prefs.setInt('stranger_display_time', strangerDisplay);
+    await prefs.setString('record_type_stranger', _recordTypeStrangerController.text);
+    await prefs.setString('record_type_known', _recordTypeKnownController.text);
+    
+    // 重新初始化认证服务以使用新的服务器地址
+    if (mounted) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.reinitialize();
+    }
+    
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('设置已保存'),
+          content: Text('设置已保存，服务器地址已更新'),
           backgroundColor: Colors.green,
         ),
       );
@@ -244,6 +272,137 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 fontSize: 14,
               ),
             ),
+            const SizedBox(height: 24),
+            const Text(
+              '人脸推送过滤配置',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _personFilterTimeController,
+              style: const TextStyle(color: Colors.black),
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: '同一个人过滤时间（毫秒）',
+                labelStyle: const TextStyle(color: Colors.grey),
+                hintText: '120000',
+                hintStyle: const TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.red[400]!),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _knownPersonDisplayController,
+              style: const TextStyle(color: Colors.black),
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: '已知人员显示时间（毫秒）',
+                labelStyle: const TextStyle(color: Colors.grey),
+                hintText: '3000',
+                hintStyle: const TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.red[400]!),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _strangerDisplayController,
+              style: const TextStyle(color: Colors.black),
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: '陌生人显示时间（毫秒）',
+                labelStyle: const TextStyle(color: Colors.grey),
+                hintText: '10000',
+                hintStyle: const TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.red[400]!),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              '人脸类型配置',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _recordTypeStrangerController,
+              style: const TextStyle(color: Colors.black),
+              decoration: InputDecoration(
+                labelText: '陌生人类型字符串',
+                labelStyle: const TextStyle(color: Colors.grey),
+                hintText: 'portrait_stranger',
+                hintStyle: const TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.red[400]!),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _recordTypeKnownController,
+              style: const TextStyle(color: Colors.black),
+              decoration: InputDecoration(
+                labelText: '已知人员类型字符串',
+                labelStyle: const TextStyle(color: Colors.grey),
+                hintText: 'portrait_known',
+                hintStyle: const TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.red[400]!),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -257,6 +416,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _rtspController.dispose();
     _apiController.dispose();
     _tokenRefreshController.dispose();
+    _personFilterTimeController.dispose();
+    _knownPersonDisplayController.dispose();
+    _strangerDisplayController.dispose();
+    _recordTypeStrangerController.dispose();
+    _recordTypeKnownController.dispose();
     super.dispose();
   }
 } 

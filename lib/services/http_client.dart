@@ -11,7 +11,7 @@ class ApiClient {
   late final Dio _dio;
 
   String? _authToken;
-  String _baseUrl = 'http://192.168.3.169:8080'; // 默认基础URL
+  String _baseUrl = 'http://192.168.3.169:8080'; // 默认基础URL，将在初始化时更新
 
   ApiClient() {
     _dio = Dio(

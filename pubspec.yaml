@@ -58,6 +58,7 @@ dependencies:
   device_info_plus: ^10.1.0
   connectivity_plus: ^6.0.3
   package_info_plus: ^8.0.0
+  permission_handler: ^11.3.1
   
   # RSA加密
   encrypt: ^5.0.3

@@ -496,6 +496,15 @@ class Applet {
       objectId: json['object_id'] ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'face': face.toJson(),
+      'portrait_image_location': portraitImageLocation.toJson(),
+      'object_id': objectId,
+    };
+  }
 }
 
 class Face {
@@ -537,6 +546,19 @@ class Face {
       faceId: json['faceId'] ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'quality': quality,
+      'rectangle': rectangle.toJson(),
+      'track_id': trackId,
+      'angle': angle.toJson(),
+      'landmarks': landmarks,
+      'attributes_with_score': attributesWithScore,
+      'face_score': faceScore,
+      'faceId': faceId,
+    };
+  }
 }
 
 class Rectangle {
@@ -553,6 +575,12 @@ class Rectangle {
           [],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'vertices': vertices,
+    };
+  }
 }
 
 class Angle {
@@ -568,6 +596,14 @@ class Angle {
       pitch: (json['pitch'] ?? 0).toDouble(),
       roll: (json['roll'] ?? 0).toDouble(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'yaw': yaw,
+      'pitch': pitch,
+      'roll': roll,
+    };
   }
 }
 
@@ -595,6 +631,14 @@ class PortraitImageLocation {
       ),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'panoramic_image_size': panoramicImageSize.toJson(),
+      'portrait_image_in_panoramic': portraitImageInPanoramic.toJson(),
+      'portrait_in_panoramic': portraitInPanoramic.toJson(),
+    };
+  }
 }
 
 class PanoramicImageSize {
@@ -608,6 +652,13 @@ class PanoramicImageSize {
       width: json['width'] ?? 0,
       height: json['height'] ?? 0,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'width': width,
+      'height': height,
+    };
   }
 }
 
@@ -625,6 +676,12 @@ class PortraitImageInPanoramic {
           [],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'vertices': vertices,
+    };
+  }
 }
 
 class PortraitInPanoramic {
@@ -640,5 +697,11 @@ class PortraitInPanoramic {
               .toList() ??
           [],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'vertices': vertices,
+    };
   }
 }

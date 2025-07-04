@@ -12,9 +12,18 @@ class PushProvider with ChangeNotifier {
   List<PushData> _pushData = [];
   String? _error;
   int? _currentUserId;
+  
+  // 过滤控制
+  Map<String, int> _lastPersonTime = {}; // 记录每个人的最后推送时间
+  Map<String, Timer> _displayTimers = {}; // 记录显示定时器
+  Map<String, int> _displayStartTime = {}; // 记录显示开始时间
 
   List<PushData> get pushData => _pushData;
   String? get error => _error;
+  
+  // 获取过滤记录数量（用于调试）
+  int get filterRecordCount => _lastPersonTime.length;
+  Map<String, int> get lastPersonTime => Map.unmodifiable(_lastPersonTime);
 
   /// 监听 AuthProvider 状态变化，自动启动/停止长轮询
   void handleAuth(AuthProvider authProvider) {
@@ -81,34 +90,134 @@ class PushProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// 添加新的推送数据
-  void addPushData(PushData data) {
-    print('addPushData: objectId=${data.objectId}, createTime=${data.createTime}');
+  /// 获取人员唯一标识（优先使用faceId，其次使用objectId）
+  String _getPersonIdentifier(PushData data) {
+    // 优先使用faceId，如果没有则使用objectId
+    final faceId = data.applet.face.faceId;
+    if (faceId.isNotEmpty) {
+      return faceId;
+    }
+    return data.objectId;
+  }
+
+  /// 检查是否应该过滤掉这个推送数据（异步热加载）
+  Future<bool> _shouldFilterPushData(PushData data) async {
+    final personId = _getPersonIdentifier(data);
+    final currentTime = DateTime.now().millisecondsSinceEpoch;
+    final filterWindow = await AppConfig.getPersonFilterTimeWindow();
+    
+    print('检查过滤: personId=$personId, 当前时间=$currentTime, 过滤窗口=${filterWindow}ms');
+    
+    // 检查是否在过滤时间窗口内
+    if (_lastPersonTime.containsKey(personId)) {
+      final lastTime = _lastPersonTime[personId]!;
+      final timeDiff = currentTime - lastTime;
+      print('发现重复人员: personId=$personId, 上次时间=$lastTime, 时间差=${timeDiff}ms');
+      
+      if (timeDiff < filterWindow) {
+        print('过滤推送数据: personId=$personId, 时间差=${timeDiff}ms < ${filterWindow}ms');
+        return true; // 过滤掉
+      } else {
+        print('时间已过期，允许推送: personId=$personId, 时间差=${timeDiff}ms >= ${filterWindow}ms');
+      }
+    } else {
+      print('新人员，允许推送: personId=$personId');
+    }
+    
+    // 更新最后推送时间
+    _lastPersonTime[personId] = currentTime;
+    print('更新最后推送时间: personId=$personId, 时间=$currentTime');
+    return false;
+  }
+
+  /// 根据人脸类型获取显示时间（异步热加载）
+  Future<int> _getDisplayTime(PushData data) async {
+    final strangerType = await AppConfig.getRecordTypeStranger();
+    final knownType = await AppConfig.getRecordTypeKnown();
+    final strangerTime = await AppConfig.getStrangerDisplayTime();
+    final knownTime = await AppConfig.getKnownPersonDisplayTime();
+    switch (data.recordType) {
+      case var t when t == strangerType:
+        return strangerTime;
+      case var t when t == knownType:
+        return knownTime;
+      default:
+        return knownTime;
+    }
+  }
+
+  /// 设置显示定时器（异步热加载）
+  Future<void> _setDisplayTimer(PushData data) async {
+    final personId = _getPersonIdentifier(data);
+    final displayTime = await _getDisplayTime(data);
+    final currentTime = DateTime.now().millisecondsSinceEpoch;
+    _displayStartTime[personId] = currentTime;
+    _displayTimers[personId]?.cancel();
+    _displayTimers[personId] = Timer(Duration(milliseconds: displayTime), () {
+      _removePushData(personId);
+    });
+  }
+
+  /// 添加新的推送数据（异步热加载）
+  Future<void> addPushDataAsync(PushData data) async {
+    print('addPushData: objectId=${data.objectId}, createTime=${data.createTime}, recordType=${data.recordType}');
+    if (await _shouldFilterPushData(data)) {
+      print('过滤掉重复的人脸推送数据');
+      return;
+    }
     _pushData.insert(0, data);
     if (_pushData.length > 50) {
       _pushData = _pushData.take(50).toList();
     }
+    await _setDisplayTimer(data);
     notifyListeners();
+  }
 
-    // // 检查是否已存在相同的数据（避免重复）
-    // bool exists = _pushData.any((item) =>
-    //   item.objectId == data.objectId &&
-    //   item.createTime == data.createTime
-    // );
+  /// 兼容原同步接口，内部自动异步
+  void addPushData(PushData data) {
+    addPushDataAsync(data);
+  }
 
-    // if (!exists) {
-    //   _pushData.insert(0, data); // 在列表开头插入新数据
-    //   // 限制列表长度，避免内存占用过多
-    //   if (_pushData.length > 50) {
-    //     _pushData = _pushData.take(50).toList();
-    //   }
-    //   notifyListeners();
-    // }
+  /// 移除推送数据
+  void _removePushData(String personId) {
+    _pushData.removeWhere((data) => _getPersonIdentifier(data) == personId);
+    _displayTimers.remove(personId);
+    _displayStartTime.remove(personId);
+    notifyListeners();
+  }
+
+  /// 清理过期的过滤记录
+  void cleanupExpiredFilters() {
+    final currentTime = DateTime.now().millisecondsSinceEpoch;
+    final expiredKeys = <String>[];
+    
+    _lastPersonTime.forEach((personId, lastTime) {
+      if (currentTime - lastTime > AppConfig.personFilterTimeWindow) {
+        expiredKeys.add(personId);
+      }
+    });
+    
+    for (final key in expiredKeys) {
+      _lastPersonTime.remove(key);
+    }
+    print('清理了 ${expiredKeys.length} 个过期的过滤记录');
+  }
+  
+  /// 清空所有过滤记录（用于测试）
+  void clearAllFilters() {
+    final count = _lastPersonTime.length;
+    _lastPersonTime.clear();
+    print('清空了所有过滤记录，共 $count 条');
   }
 
   @override
   void dispose() {
     stopLongPolling();
+    // 取消所有定时器
+    for (final timer in _displayTimers.values) {
+      timer.cancel();
+    }
+    _displayTimers.clear();
     super.dispose();
   }
 }

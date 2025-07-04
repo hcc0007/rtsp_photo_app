@@ -4,13 +4,18 @@ class AppConfig {
   // Mock数据开关
   static const bool showMockData = false; // 设置为true使用mock数据，false使用真实数据
   
+  // 人脸推送过滤配置
+  static const int personFilterTimeWindow = 180000; // 同一个人3分钟内的过滤窗口（毫秒）
+  static const int knownPersonDisplayTime = 3000; // 已知人员显示时间（毫秒）
+  static const int strangerDisplayTime = 10000; // 陌生人显示时间（毫秒）
+  
+  // 人脸类型配置
+  static const String recordTypeStranger = 'portrait_stranger'; // 陌生人类型
+  static const String recordTypeKnown = 'portrait_known'; // 已知人员类型
   
   // 服务器地址
   static const String defaultServerUrl = 'http://192.168.3.169';
   static const String defaultServerPort = '8080';
-
-  // WebSocket配置
-  static const String defaultWebSocketUrl = 'ws://192.168.3.169:8080';
 
   // RTSP配置
   static const String defaultRtspUrl = 'rtsp://192.168.3.169:8554/mystream';
@@ -77,5 +82,28 @@ class AppConfig {
     } else {
       return 'https://$serverUrl';
     }
+  }
+
+  // 动态获取人脸推送过滤配置
+  static Future<int> getPersonFilterTimeWindow() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('person_filter_time_window') ?? personFilterTimeWindow;
+  }
+  static Future<int> getKnownPersonDisplayTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('known_person_display_time') ?? knownPersonDisplayTime;
+  }
+  static Future<int> getStrangerDisplayTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('stranger_display_time') ?? strangerDisplayTime;
+  }
+  // 动态获取人脸类型配置
+  static Future<String> getRecordTypeStranger() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('record_type_stranger') ?? recordTypeStranger;
+  }
+  static Future<String> getRecordTypeKnown() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('record_type_known') ?? recordTypeKnown;
   }
 } 

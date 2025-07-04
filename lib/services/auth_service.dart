@@ -4,6 +4,7 @@ import 'http_client.dart';
 import 'package:logging/logging.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:pointycastle/asymmetric/api.dart';
+import '../config/app_config.dart';
 
 class AuthService {
   static const String _tokenKey = 'auth_token';
@@ -43,11 +44,25 @@ class AuthService {
     _httpClient.setBaseUrl(serverUrl);
   }
 
+  // 重新初始化服务（用于设置更改后）
+  Future<void> reinitialize() async {
+    // 重新设置基础URL
+    final serverUrl = await _getServerUrl();
+    _httpClient.setBaseUrl(serverUrl);
+    _logger.info('重新初始化AuthService，新的服务器URL: $serverUrl');
+  }
+
   // 获取服务器URL
   Future<String> _getServerUrl() async {
-    // 这里可以从配置或SharedPreferences获取服务器URL
-    // 暂时使用默认配置
-    return 'http://192.168.3.169:8080';
+    // 从AppConfig获取用户设置的服务器URL
+    final serverUrl = await AppConfig.getServerUrl();
+    final serverPort = await AppConfig.getServerPort();
+    
+    if (serverPort.isNotEmpty) {
+      return '$serverUrl:$serverPort';
+    } else {
+      return serverUrl;
+    }
   }
 
   // 从本地存储加载token

@@ -14,11 +14,12 @@ class GlobalLogManager {
 
   void addLog(LogRecord record) {
     final logEntry = _formatLogRecord(record);
-    _logs.add(logEntry);
+    // 将新日志插入到列表开头，实现倒序
+    _logs.insert(0, logEntry);
 
     // 限制日志数量
     if (_logs.length > _maxLogs) {
-      _logs.removeRange(0, _logs.length - _maxLogs + 100);
+      _logs.removeRange(_maxLogs - 100, _logs.length);
     }
   }
 
@@ -59,7 +60,7 @@ class GlobalLogManager {
     if (_logs.length <= count) {
       return _logs;
     }
-    return _logs.sublist(_logs.length - count);
+    return _logs.sublist(0, count);
   }
 
   // 导出日志到文件

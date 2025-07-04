@@ -1,5 +1,5 @@
 import '../models/push_data.dart';
-import '../models/person_info.dart';
+import 'package:rtsp_photo_app/models/person_info.dart';
 
 class MockData {
   /// 获取模拟的推送数据
