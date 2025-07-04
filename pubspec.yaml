@@ -49,6 +49,27 @@ dependencies:
   
   # 本地存储
   shared_preferences: ^2.2.2
+  path_provider: ^2.1.2
+
+  # 日志管理
+  logging_flutter: ^3.0.0
+
+  # Additional dependencies
+  device_info_plus: ^10.1.0
+  connectivity_plus: ^6.0.3
+  package_info_plus: ^8.0.0
+  
+  # RSA加密
+  encrypt: ^5.0.3
+  
+  # 加密工具
+  crypto: ^3.0.3
+  pointycastle: ^3.9.0
+  rsa_encrypt: ^2.0.0
+  dio: ^5.8.0+1
+
+  # 服务
+  get_server: ^1.2.1
 
 dev_dependencies:
   flutter_test:

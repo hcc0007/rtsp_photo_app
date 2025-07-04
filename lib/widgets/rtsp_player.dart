@@ -3,21 +3,21 @@ import 'package:flutter_vlc_player/flutter_vlc_player.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/services.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class RtspPlayer extends StatefulWidget {
   final String rtspUrl;
-  
-  const RtspPlayer({
-    super.key,
-    required this.rtspUrl,
-  });
+
+  const RtspPlayer({super.key, required this.rtspUrl});
 
   @override
   State<RtspPlayer> createState() => _RtspPlayerState();
 }
 
 class _RtspPlayerState extends State<RtspPlayer> {
-  late VlcPlayerController _videoPlayerController;
+  VlcPlayerController? _videoPlayerController;
   bool _isPlaying = false;
   bool _isInitialized = false;
   String? _errorMessage;
@@ -28,21 +28,64 @@ class _RtspPlayerState extends State<RtspPlayer> {
   Timer? _timeoutTimer;
   bool _networkOk = false;
   bool _connecting = false;
+  Timer? _statusTimer;
 
   @override
   void initState() {
     super.initState();
+    _logDeviceAndNetworkInfo();
     _checkInternetPermissionAndStart();
+    _statusTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (mounted && _isInitialized) {
+        try {
+          final value = _videoPlayerController!.value;
+          _addLog(
+            'VLC状态: isPlaying=${value.isPlaying}, hasError=${value.hasError}, position=${value.position}, duration=${value.duration}, errorMsg=${value.errorDescription}',
+          );
+        } catch (e) {
+          _addLog('VLC状态获取异常: $e');
+        }
+      }
+    });
   }
 
   void _addLog(String msg) {
-    print(msg);
+    final now = DateTime.now();
+    final timeStr =
+        '[${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}] ';
+    print(timeStr + msg);
+    // 可以在这里添加全局日志记录
+    // 暂时使用print输出
     setState(() {
-      _logs.add(msg);
-      if (_logs.length > 10) {
-        _logs.removeAt(0);
-      }
+      _logs.add(timeStr + msg);
+      if (_logs.length > 10) _logs.removeAt(0);
     });
+  }
+
+  Future<void> _logDeviceAndNetworkInfo() async {
+    try {
+      // 设备信息
+      final deviceInfoPlugin = DeviceInfoPlugin();
+      String deviceStr = '';
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfoPlugin.androidInfo;
+        deviceStr =
+            '设备: ${androidInfo.brand} ${androidInfo.model} Android ${androidInfo.version.release}';
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfoPlugin.iosInfo;
+        deviceStr =
+            '设备: ${iosInfo.name} ${iosInfo.model} iOS ${iosInfo.systemVersion}';
+      }
+      _addLog(deviceStr);
+      // App版本
+      final packageInfo = await PackageInfo.fromPlatform();
+      _addLog('App版本: ${packageInfo.version}+${packageInfo.buildNumber}');
+      // 网络类型
+      final connectivityResult = await Connectivity().checkConnectivity();
+      _addLog('网络类型: ${connectivityResult.toString()}');
+    } catch (e) {
+      _addLog('设备/网络信息获取异常: $e');
+    }
   }
 
   Future<void> _checkInternetPermissionAndStart() async {
@@ -91,10 +134,17 @@ class _RtspPlayerState extends State<RtspPlayer> {
     int port = uri.port > 0 ? uri.port : 554;
     _addLog('检测网络: $host:$port');
     try {
-      final socket = await Socket.connect(host, port, timeout: const Duration(seconds: 5));
+      final socket = await Socket.connect(
+        host,
+        port,
+        timeout: const Duration(seconds: 5),
+      );
       socket.destroy();
       _addLog('网络连通: $host:$port');
-      setState(() { _networkOk = true; _status = '网络正常，准备连接视频流...'; });
+      setState(() {
+        _networkOk = true;
+        _status = '网络正常，准备连接视频流...';
+      });
     } catch (e) {
       _addLog('网络不可达: $host:$port, 错误: $e');
       setState(() {
@@ -107,7 +157,9 @@ class _RtspPlayerState extends State<RtspPlayer> {
     }
     // 2. 开始连接，启动超时计时器
     _addLog('开始连接RTSP流...');
-    setState(() { _status = '正在连接视频流...'; });
+    setState(() {
+      _status = '正在连接视频流...';
+    });
     _timeoutTimer?.cancel();
     _timeoutTimer = Timer(const Duration(minutes: 5), () {
       _addLog('连接超时（5分钟）');
@@ -122,15 +174,16 @@ class _RtspPlayerState extends State<RtspPlayer> {
 
   void _initializePlayer() {
     try {
+      if (_isInitialized) return;
       _videoPlayerController = VlcPlayerController.network(
         widget.rtspUrl,
         hwAcc: HwAcc.full,
         autoPlay: true,
       );
-      _videoPlayerController.addListener(() {
+      _videoPlayerController!.addListener(() {
         if (mounted) {
           setState(() {
-            _isPlaying = _videoPlayerController.value.isPlaying;
+            _isPlaying = _videoPlayerController!.value.isPlaying;
             _isInitialized = true;
             if (_isPlaying) {
               _addLog('视频流连接成功，正在播放');
@@ -156,16 +209,16 @@ class _RtspPlayerState extends State<RtspPlayer> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Colors.red.withValues(alpha: 0.3),
       child: Stack(
         children: [
           if (_errorMessage != null)
             _buildErrorWidget()
-          else if (!_isInitialized)
+          else if (!_isInitialized || _videoPlayerController == null)
             _buildLoadingWidget()
           else
             VlcPlayer(
-              controller: _videoPlayerController,
+              controller: _videoPlayerController!,
               aspectRatio: 16 / 9,
               placeholder: _buildLoadingWidget(),
             ),
@@ -175,19 +228,39 @@ class _RtspPlayerState extends State<RtspPlayer> {
             top: 8,
             child: Container(
               padding: const EdgeInsets.all(8),
-              width: 320,
+              width: 200,
+              height: 160,
               decoration: BoxDecoration(
                 color: Colors.black54,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('状态: $_status', style: const TextStyle(color: Colors.white, fontSize: 14)),
-                  const SizedBox(height: 4),
-                  const Text('日志:', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  ..._logs.map((e) => Text(e, style: const TextStyle(color: Colors.white70, fontSize: 11))).toList(),
-                ],
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '状态: $_status',
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      '日志:',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                    ..._logs
+                        .map(
+                          (e) => Text(
+                            e,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -209,10 +282,7 @@ class _RtspPlayerState extends State<RtspPlayer> {
             SizedBox(height: 16),
             Text(
               '正在连接视频流...',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ],
         ),
@@ -222,23 +292,16 @@ class _RtspPlayerState extends State<RtspPlayer> {
 
   Widget _buildErrorWidget() {
     return Container(
-      color: Colors.black,
+      color: Colors.transparent,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.red,
-              size: 48,
-            ),
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 16),
             Text(
               _errorMessage ?? '未知错误',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 16),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -260,7 +323,8 @@ class _RtspPlayerState extends State<RtspPlayer> {
   @override
   void dispose() {
     _timeoutTimer?.cancel();
-    _videoPlayerController.dispose();
+    _statusTimer?.cancel();
+    _videoPlayerController?.dispose();
     super.dispose();
   }
-} 
+}
