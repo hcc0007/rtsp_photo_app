@@ -106,26 +106,29 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             onPressed: () async {
-              // 弹出登录对话框
-              final authProvider = Provider.of<AuthProvider>(
-                context,
-                listen: false,
+              // 显示登录对话框
+              final loginResult = await showDialog<Map<String, String>>(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => LoginDialog(),
               );
               
-              if (AppConfig.showMockData) {
-                // 使用Mock数据登录
-                await authProvider.mockLogin();
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Mock登录成功'),
-                    backgroundColor: Colors.green,
-                  ),
+              if (loginResult != null) {
+                final username = loginResult['username']!;
+                final password = loginResult['password']!;
+                
+                final authProvider = Provider.of<AuthProvider>(
+                  context,
+                  listen: false,
                 );
-              } else {
-                // 使用真实数据登录
-                final loginSuccess = await authProvider.autoLogin();
+                
+                final loginSuccess = await authProvider.login(
+                  username: username,
+                  password: password,
+                );
+                
                 if (!mounted) return;
+                
                 if (loginSuccess) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -228,6 +231,106 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class LoginDialog extends StatefulWidget {
+  @override
+  _LoginDialogState createState() => _LoginDialogState();
+}
+
+class _LoginDialogState extends State<LoginDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 使用AppConfig中的默认用户名和密码
+    _usernameController.text = AppConfig.defaultUsername;
+    _passwordController.text = AppConfig.defaultPassword;
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('用户登录'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _usernameController,
+              decoration: const InputDecoration(
+                labelText: '用户名',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.person),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return '请输入用户名';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _passwordController,
+              decoration: const InputDecoration(
+                labelText: '密码',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
+              obscureText: true,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return '请输入密码';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          child: const Text('取消'),
+        ),
+        ElevatedButton(
+          onPressed: _isLoading ? null : () async {
+            if (_formKey.currentState!.validate()) {
+              setState(() {
+                _isLoading = true;
+              });
+              
+              // 返回用户名和密码
+              Navigator.of(context).pop({
+                'username': _usernameController.text.trim(),
+                'password': _passwordController.text,
+              });
+            }
+          },
+          child: _isLoading 
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Text('登录'),
+        ),
+      ],
     );
   }
 }
