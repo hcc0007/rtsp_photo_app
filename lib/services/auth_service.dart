@@ -38,7 +38,7 @@ class AuthService {
     await _loadTokenFromStorage();
     await _loadUserInfoFromStorage();
     _httpClient.setAuthToken(_token);
-    
+
     // 设置基础URL
     final serverUrl = await _getServerUrl();
     _httpClient.setBaseUrl(serverUrl);
@@ -57,7 +57,7 @@ class AuthService {
     // 从AppConfig获取用户设置的服务器URL
     final serverUrl = await AppConfig.getServerUrl();
     final serverPort = await AppConfig.getServerPort();
-    
+
     if (serverPort.isNotEmpty) {
       return '$serverUrl:$serverPort';
     } else {
@@ -97,7 +97,7 @@ class AuthService {
     try {
       final response = await _httpClient.get('/gateway/auth/api/v1/rsapub');
       final responseData = response.data as Map<String, dynamic>;
-      
+
       if (responseData['success'] == true) {
         final data = responseData['data'] as Map<String, dynamic>;
         return {
@@ -114,10 +114,14 @@ class AuthService {
 
   // 用RSA公钥加密密码
   String _encryptPasswordRsa(String password, String publicKeyPem) {
+    final correctPem =
+        '-----BEGIN PUBLIC KEY-----\n$publicKeyPem\n-----END PUBLIC KEY-----';
     try {
       final parser = RSAKeyParser();
-      final publicKey = parser.parse(publicKeyPem) as RSAPublicKey;
-      final encrypter = Encrypter(RSA(publicKey: publicKey, encoding: RSAEncoding.PKCS1));
+      final publicKey = parser.parse(correctPem) as RSAPublicKey;
+      final encrypter = Encrypter(
+        RSA(publicKey: publicKey, encoding: RSAEncoding.PKCS1),
+      );
       final encrypted = encrypter.encrypt(password);
       return encrypted.base64;
     } catch (e) {
@@ -175,7 +179,11 @@ class AuthService {
       final responseData = response.data as Map<String, dynamic>;
       if (responseData['success'] == true) {
         await _updateUserSession(responseData['data']);
-        return {'success': true, 'message': '登录成功', 'data': responseData['data']};
+        return {
+          'success': true,
+          'message': '登录成功',
+          'data': responseData['data'],
+        };
       } else {
         return {
           'success': false,
@@ -196,12 +204,18 @@ class AuthService {
     }
 
     try {
-      final response = await _httpClient.get('/gateway/auth/api/v1/user/detail');
+      final response = await _httpClient.get(
+        '/gateway/auth/api/v1/user/detail',
+      );
       final responseData = response.data as Map<String, dynamic>;
 
       if (responseData['success'] == true) {
         await _updateUserSession(responseData['data']);
-        return {'success': true, 'message': '获取用户信息成功', 'data': responseData['data']};
+        return {
+          'success': true,
+          'message': '获取用户信息成功',
+          'data': responseData['data'],
+        };
       } else {
         return {
           'success': false,
@@ -220,7 +234,7 @@ class AuthService {
     _token = userData['token'];
     _userInfo = userData;
     _httpClient.setAuthToken(_token);
-    
+
     await _saveTokenToStorage(_token!);
     await _saveUserInfoToStorage(userData);
   }

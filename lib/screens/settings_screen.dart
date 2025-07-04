@@ -36,7 +36,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _serverUrlController.text = prefs.getString('server_url') ?? AppConfig.defaultServerUrl;
       _serverPortController.text = prefs.getString('server_port') ?? AppConfig.defaultServerPort;
       _rtspController.text = prefs.getString('rtsp_url') ?? AppConfig.defaultRtspUrl;
-      _apiController.text = prefs.getString('api_url') ?? AppConfig.defaultApiUrl;
       _tokenRefreshController.text = (prefs.getInt('token_refresh_interval') ?? AppConfig.tokenRefreshInterval).toString();
       _personFilterTimeController.text = (prefs.getInt('person_filter_time_window') ?? AppConfig.personFilterTimeWindow).toString();
       _knownPersonDisplayController.text = (prefs.getInt('known_person_display_time') ?? AppConfig.knownPersonDisplayTime).toString();

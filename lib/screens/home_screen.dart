@@ -17,7 +17,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String rtspUrl = AppConfig.defaultRtspUrl;
-  String apiUrl = AppConfig.defaultApiUrl;
   bool? _lastIsLoggedIn;
 
   @override
@@ -44,17 +43,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadSettings() async {
     setState(() {
       rtspUrl = AppConfig.defaultRtspUrl;
-      apiUrl = AppConfig.defaultApiUrl;
     });
 
     // 异步加载用户设置的配置
     final userRtspUrl = await AppConfig.getRtspUrl();
-    final userApiUrl = await AppConfig.getApiUrl();
 
     if (mounted) {
       setState(() {
         rtspUrl = userRtspUrl;
-        apiUrl = userApiUrl;
       });
     }
   }
@@ -245,6 +241,7 @@ class _LoginDialogState extends State<LoginDialog> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true; // 控制密码显示/隐藏
 
   @override
   void initState() {
@@ -287,12 +284,20 @@ class _LoginDialogState extends State<LoginDialog> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _passwordController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: '密码',
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock),
+                prefixIcon: const Icon(Icons.lock),
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                  icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                ),
               ),
-              obscureText: true,
+              obscureText: _obscurePassword,
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return '请输入密码';

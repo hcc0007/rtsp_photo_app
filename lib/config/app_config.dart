@@ -60,12 +60,6 @@ class AppConfig {
     return prefs.getString('rtsp_url') ?? defaultRtspUrl;
   }
 
-  // 获取用户设置的API地址
-  static Future<String> getApiUrl() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('api_url') ?? defaultApiUrl;
-  }
-
   // 获取用户设置的token刷新间隔
   static Future<int> getTokenRefreshInterval() async {
     final prefs = await SharedPreferences.getInstance();
