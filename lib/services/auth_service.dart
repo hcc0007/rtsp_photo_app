@@ -7,7 +7,7 @@ import 'package:pointycastle/asymmetric/api.dart';
 import '../config/app_config.dart';
 
 class AuthService {
-  static const String _tokenKey = 'auth_token';
+  static final String _tokenKey = ApiClient.tokenKey;
   static const String _userInfoKey = 'user_info';
 
   // 单例模式

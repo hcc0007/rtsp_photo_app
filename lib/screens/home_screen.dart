@@ -107,60 +107,26 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             onPressed: () async {
               // 弹出登录对话框
-              final result = await showDialog<Map<String, String>>(
-                context: context,
-                builder: (context) {
-                  final TextEditingController usernameController =
-                      TextEditingController(text: AppConfig.defaultUsername);
-                  final TextEditingController passwordController =
-                      TextEditingController(text: AppConfig.defaultPassword);
-                  return AlertDialog(
-                    title: const Text('手动登录'),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextField(
-                          controller: usernameController,
-                          decoration: const InputDecoration(labelText: '用户名'),
-                        ),
-                        TextField(
-                          controller: passwordController,
-                          decoration: const InputDecoration(labelText: '密码'),
-                          obscureText: true,
-                        ),
-                      ],
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('取消'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop({
-                            'username': usernameController.text,
-                            'password': passwordController.text,
-                          });
-                        },
-                        child: const Text('登录'),
-                      ),
-                    ],
-                  );
-                },
+              final authProvider = Provider.of<AuthProvider>(
+                context,
+                listen: false,
               );
-              if (result != null &&
-                  result['username'] != null &&
-                  result['password'] != null) {
-                final authProvider = Provider.of<AuthProvider>(
-                  context,
-                  listen: false,
+              
+              if (AppConfig.showMockData) {
+                // 使用Mock数据登录
+                await authProvider.mockLogin();
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Mock登录成功'),
+                    backgroundColor: Colors.green,
+                  ),
                 );
-                final success = await authProvider.login(
-                  username: result['username']!,
-                  password: result['password']!,
-                );
-                if (success) {
-                  if (!mounted) return;
+              } else {
+                // 使用真实数据登录
+                final loginSuccess = await authProvider.autoLogin();
+                if (!mounted) return;
+                if (loginSuccess) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('登录成功'),
@@ -168,10 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
                 } else {
-                  if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(authProvider.errorMessage ?? '登录失败'),
+                      content: Text('登录失败: ${authProvider.errorMessage}'),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -179,7 +144,51 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             },
             icon: const Icon(Icons.login, color: Colors.white),
-            tooltip: '手动登录',
+            tooltip: '登录',
+          ),
+          IconButton(
+            onPressed: () async {
+              // 弹出确认登出对话框
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('确认登出'),
+                  content: const Text('确定要退出登录吗？'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('取消'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('确认登出'),
+                    ),
+                  ],
+                ),
+              );
+              
+              if (confirmed == true) {
+                final authProvider = Provider.of<AuthProvider>(
+                  context,
+                  listen: false,
+                );
+                await authProvider.logout();
+                
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('已退出登录'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: '退出登录',
           ),
         ],
       ),
