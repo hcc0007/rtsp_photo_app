@@ -74,7 +74,7 @@ class _SenseImageState extends State<SenseImage> {
         options: Options(
           method: 'GET', 
           headers: {ApiClient.tokenKey: token},
-          // responseType: ResponseType.bytes, // 明确指定响应类型为字节
+          responseType: ResponseType.bytes, // 明确指定响应类型为字节
         ),
       );
       

@@ -13,7 +13,7 @@ class FaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = pushData.imgUrl;
+    final imageUrl = pushData.portraitImage.url;
     final name = pushData.name;
     final recordType = pushData.recordType;
     
