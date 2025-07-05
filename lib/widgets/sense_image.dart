@@ -2,11 +2,13 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:provider/provider.dart';
 import 'package:rtsp_photo_app/providers/auth_provider.dart';
-import 'package:rtsp_photo_app/services/http_client.dart';
+import 'package:rtsp_photo_app/services/api_client.dart';
 import 'package:rtsp_photo_app/config/app_config.dart';
 import 'package:logging/logging.dart';
+import 'dart:io';
 
 final _logger = Logger('SenseImage');
 
@@ -55,16 +57,18 @@ class _SenseImageState extends State<SenseImage> {
 
     // 动态获取服务器地址
     final serverUrl = await AppConfig.getFullServerUrl();
-    
+
     // 检查服务器地址是否发生变化
-    if (_lastServerUrl != null && _lastServerUrl == serverUrl && _imageBytes != null) {
+    if (_lastServerUrl != null &&
+        _lastServerUrl == serverUrl &&
+        _imageBytes != null) {
       // 服务器地址没有变化，且图片已加载，不需要重新加载
       return;
     }
-    
+
     _lastServerUrl = serverUrl;
     final url = '$serverUrl/gateway/sys/api/v1/images/${widget.objectKey}';
-    
+
     final authInfo = Provider.of<AuthProvider>(
       context,
       listen: false,
@@ -86,7 +90,18 @@ class _SenseImageState extends State<SenseImage> {
     }
 
     try {
-      final response = await Dio().request(
+      final dio = Dio();
+      // 忽略自签名证书校验，仅开发环境使用！
+      (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+        final client = HttpClient();
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) {
+              _logger.info('调试模式：忽略证书验证 $host:$port');
+              return true;
+            };
+        return client;
+      };
+      final response = await dio.request(
         url,
         options: Options(
           method: 'GET',
@@ -163,7 +178,9 @@ class _SenseImageState extends State<SenseImage> {
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[400]!),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.grey[400]!,
+                      ),
                     ),
                   ),
                   SizedBox(height: 4),
@@ -177,58 +194,58 @@ class _SenseImageState extends State<SenseImage> {
           );
         }
 
-    if (_errorMessage != null) {
-      return Container(
-        width: widget.width,
-        height: widget.height,
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.person, size: 48, color: Colors.grey[600]),
-              // SizedBox(height: 4),
-              // Text(
-              //   '加载失败',
-              //   style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-              // ),
-            ],
-          ),
-        ),
-      );
-    }
+        if (_errorMessage != null) {
+          return Container(
+            width: widget.width,
+            height: widget.height,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person, size: 48, color: Colors.grey[600]),
+                  // SizedBox(height: 4),
+                  // Text(
+                  //   '加载失败',
+                  //   style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                  // ),
+                ],
+              ),
+            ),
+          );
+        }
 
-    if (_imageBytes == null || _imageBytes!.isEmpty) {
-      return Container(
-        width: widget.width,
-        height: widget.height,
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.person, size: 48, color: Colors.grey[600]),
-              // Icon(
-              //   Icons.image_not_supported,
-              //   size: 24,
-              //   color: Colors.grey[600],
-              // ),
-              // SizedBox(height: 4),
-              // Text(
-              //   '无图片',
-              //   style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-              // ),
-            ],
-          ),
-        ),
-      );
-    }
+        if (_imageBytes == null || _imageBytes!.isEmpty) {
+          return Container(
+            width: widget.width,
+            height: widget.height,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person, size: 48, color: Colors.grey[600]),
+                  // Icon(
+                  //   Icons.image_not_supported,
+                  //   size: 24,
+                  //   color: Colors.grey[600],
+                  // ),
+                  // SizedBox(height: 4),
+                  // Text(
+                  //   '无图片',
+                  //   style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                  // ),
+                ],
+              ),
+            ),
+          );
+        }
 
         if (_errorMessage != null) {
           return Container(

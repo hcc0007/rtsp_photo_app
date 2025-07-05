@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import '../services/http_client.dart';
+import '../services/api_client.dart';
 import 'auth_provider.dart';
 import '../config/app_config.dart';
 import '../models/push_data.dart';
