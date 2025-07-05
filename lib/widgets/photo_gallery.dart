@@ -209,9 +209,11 @@ class FaceCard extends StatelessWidget {
   Color _getRecordTypeColor(String recordType) {
     switch (recordType) {
       case 'portrait_stranger':
-        return Colors.red[600]!;
+        return Colors.grey[600]!;
       case 'portrait_known':
-        return Colors.green[600]!;
+        return Colors.blue[600]!;
+      case 'portrait_normal':
+        return Colors.yellow[600]!;
       default:
         return Colors.grey[600]!;
     }
@@ -239,21 +241,21 @@ class _PhotoGalleryState extends State<PhotoGallery> {
     _pushDataSubscription = PushServerService.pushDataStream.listen((newData) {
       final _ts = DateTime.now().millisecondsSinceEpoch.toString();
       try {
-        _logger.severe('[$_ts] 人脸推送数据： 开始解析🔍');
-        _logger.severe('[$_ts] 原始数据: $newData');
+        _logger.info('[$_ts] 人脸推送数据： 开始解析🔍');
+        _logger.info('[$_ts] 原始数据: $newData');
         final pushData = PushData.fromJson(newData);
-        _logger.severe('[$_ts] 人脸推送数据： 解析成功🏅');
-        _logger.severe('[$_ts] 解析后数据: objectId=${pushData.objectId}, faceId=${pushData.applet.face.faceId}, recordType=${pushData.recordType}');
+        _logger.info('[$_ts] 人脸推送数据： 解析成功🏅');
+        _logger.info('[$_ts] 解析后数据: objectId=${pushData.objectId}, faceId=${pushData.applet.face.faceId}, recordType=${pushData.recordType}');
         
         // 直接添加到PushProvider，让过滤逻辑处理重复检查
         if (mounted) {
-          _logger.severe('[$_ts] 准备添加到PushProvider: objectId=${pushData.objectId}');
+          _logger.info('[$_ts] 准备添加到PushProvider: objectId=${pushData.objectId}');
           try {
             Provider.of<PushProvider>(
               context,
               listen: false,
             ).addPushData(pushData);
-            _logger.severe('[$_ts] 已调用addPushData');
+            _logger.info('[$_ts] 已调用addPushData');
           } catch (e) {
             _logger.severe('[$_ts] 调用addPushData时出错: $e');
           }

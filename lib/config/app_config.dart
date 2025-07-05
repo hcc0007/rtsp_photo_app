@@ -8,6 +8,7 @@ class AppConfig {
   static const int personFilterTimeWindow = 100; // 同一个人100ms内的过滤窗口（测试用）
   static const int knownPersonDisplayTime = 3000; // 已知人员显示时间（毫秒）
   static const int strangerDisplayTime = 10000; // 陌生人显示时间（毫秒）
+  static const int normalPersonDisplayTime = 5000; // 普通人员显示时间（毫秒）
   
   // 人脸类型配置
   static const String recordTypeStranger = 'portrait_stranger'; // 陌生人类型
@@ -88,6 +89,10 @@ class AppConfig {
   static Future<int> getStrangerDisplayTime() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt('stranger_display_time') ?? strangerDisplayTime;
+  }
+  static Future<int> getNormalPersonDisplayTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('normal_person_display_time') ?? normalPersonDisplayTime;
   }
   // 动态获取人脸类型配置
   static Future<String> getRecordTypeStranger() async {

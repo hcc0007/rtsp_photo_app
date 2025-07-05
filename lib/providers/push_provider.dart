@@ -148,6 +148,7 @@ class PushProvider with ChangeNotifier {
     final normalType = AppConfig.recordTypeNormal;
     final strangerTime = await AppConfig.getStrangerDisplayTime();
     final knownTime = await AppConfig.getKnownPersonDisplayTime();
+    final normalTime = await AppConfig.getNormalPersonDisplayTime();
     
     print('获取显示时间: recordType=${data.recordType}, strangerType=$strangerType, knownType=$knownType, normalType=$normalType');
     
@@ -159,8 +160,8 @@ class PushProvider with ChangeNotifier {
         print('使用已知人员显示时间: ${knownTime}ms');
         return knownTime;
       case var t when t == normalType:
-        print('使用普通人员显示时间: ${knownTime}ms');
-        return knownTime;
+        print('使用普通人员显示时间: ${normalTime}ms');
+        return normalTime;
       default:
         print('未知类型，使用默认显示时间: ${knownTime}ms');
         return knownTime;
