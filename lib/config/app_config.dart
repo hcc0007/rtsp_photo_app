@@ -5,13 +5,14 @@ class AppConfig {
   static const bool showMockData = false; // 设置为true使用mock数据，false使用真实数据
   
   // 人脸推送过滤配置
-  static const int personFilterTimeWindow = 180000; // 同一个人3分钟内的过滤窗口（毫秒）
+  static const int personFilterTimeWindow = 100; // 同一个人100ms内的过滤窗口（测试用）
   static const int knownPersonDisplayTime = 3000; // 已知人员显示时间（毫秒）
   static const int strangerDisplayTime = 10000; // 陌生人显示时间（毫秒）
   
   // 人脸类型配置
   static const String recordTypeStranger = 'portrait_stranger'; // 陌生人类型
   static const String recordTypeKnown = 'portrait_known'; // 已知人员类型
+  static const String recordTypeNormal = 'portrait_normal'; // 普通人员类型
   
   // 服务器地址
   static const String defaultServerUrl = 'http://192.168.3.169';

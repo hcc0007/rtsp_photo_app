@@ -195,17 +195,17 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             // RTSP视频流区域 - 占据屏幕上方30%
-            Expanded(
-              flex: 4,
-              child: Container(
-                width: double.infinity,
-                margin: EdgeInsets.symmetric(horizontal: 24, vertical: 6),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: RtspPlayer(rtspUrl: rtspUrl),
-              ),
-            ),
+            // Expanded(
+            //   flex: 4,
+            //   child: Container(
+            //     width: double.infinity,
+            //     margin: EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+            //     decoration: BoxDecoration(
+            //       border: Border.all(color: Colors.white, width: 2),
+            //     ),
+            //     child: RtspPlayer(rtspUrl: rtspUrl),
+            //   ),
+            // ),
 
             // 照片展示区域 - 占据屏幕下方70%
             Expanded(

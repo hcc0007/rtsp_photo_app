@@ -82,6 +82,8 @@ class PersonInfo {
         return '陌生人';
       case 'portrait_known':
         return '已知人员';
+      case 'portrait_normal':
+        return '普通人员';
       default:
         return '未知';
     }
@@ -90,9 +92,11 @@ class PersonInfo {
   static Color getRecordTypeColor(String recordType) {
     switch (recordType) {
       case 'portrait_stranger':
-        return Colors.red;
+        return Colors.grey;
       case 'portrait_known':
-        return Colors.green;
+        return Colors.blue;
+      case 'portrait_normal':
+        return Colors.yellow;
       default:
         return Colors.white.withValues(alpha: 0.5);
     }
@@ -103,6 +107,8 @@ class PersonInfo {
       case 'portrait_stranger':
         return Colors.white;
       case 'portrait_known':
+        return Colors.white;
+      case 'portrait_normal':
         return Colors.white;
       default:
         return Colors.black;
@@ -327,16 +333,17 @@ class Roi {
       roiName: json['roiName']?.toString() ?? '',
       roiType: json['roiType']?.toString(),
       extendJson: json['extendJson']?.toString(),
-      verticeList: (json['verticeList'] as List<dynamic>?)
-          ?.map(
-            (e) => Map<String, dynamic>.from(e).map(
-              (k, v) => MapEntry(
-                k,
-                v is int ? v : int.tryParse(v.toString()) ?? 0,
-              ),
-            ),
-          )
-          .toList() ??
+      verticeList:
+          (json['verticeList'] as List<dynamic>?)
+              ?.map(
+                (e) => Map<String, dynamic>.from(e).map(
+                  (k, v) => MapEntry(
+                    k,
+                    v is int ? v : int.tryParse(v.toString()) ?? 0,
+                  ),
+                ),
+              )
+              .toList() ??
           [],
     );
   }
@@ -434,8 +441,10 @@ class PortraitDb {
       name: json['name'] ?? '',
       enableState: int.tryParse(json['enableState']?.toString() ?? '0') ?? 0,
       activeState: int.tryParse(json['activeState']?.toString() ?? '0') ?? 0,
-      activationTime: int.tryParse(json['activationTime']?.toString() ?? '0') ?? 0,
-      expirationTime: int.tryParse(json['expirationTime']?.toString() ?? '0') ?? 0,
+      activationTime:
+          int.tryParse(json['activationTime']?.toString() ?? '0') ?? 0,
+      expirationTime:
+          int.tryParse(json['expirationTime']?.toString() ?? '0') ?? 0,
       createTime: int.tryParse(json['createTime']?.toString() ?? '0') ?? 0,
     );
   }

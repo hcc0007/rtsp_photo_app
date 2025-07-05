@@ -15,6 +15,7 @@ class SenseImage extends StatefulWidget {
   final double? width;
   final double? height;
   final BoxFit fit;
+  final String? id;
 
   SenseImage({
     super.key,
@@ -22,6 +23,7 @@ class SenseImage extends StatefulWidget {
     this.width,
     this.height,
     this.fit = BoxFit.cover,
+    this.id,
   });
 
   @override
@@ -32,6 +34,7 @@ class _SenseImageState extends State<SenseImage> {
   Uint8List? _imageBytes;
   bool _isLoading = true;
   String? _errorMessage;
+  final String _ts = DateTime.now().millisecondsSinceEpoch.toString();
 
   @override
   void initState() {
@@ -45,63 +48,68 @@ class _SenseImageState extends State<SenseImage> {
         _isLoading = false;
         _errorMessage = '图片标识为空';
       });
+      _logger.warning('[${widget.id ?? _ts}] 图片加载失败：$_errorMessage');
       return;
     }
 
-    // final url = 'http://localhost:3000/gateway/sys/api/v1/images/${widget.objectKey}';
-    final url = 'http://localhost:3000/gateway/sys/api/v1/images/22/22';
-    // final authInfo = Provider.of<AuthProvider>(
-    //   context,
-    //   listen: false,
-    // ).authService;
-    // final token = authInfo.token;
-    final token = '1234567890';
-    
-    // if (token == null || token.isEmpty) {
-    //   setState(() {
-    //     _isLoading = false;
-    //     _errorMessage = '未登录或token无效';
-    //   });
-    //   _logger.warning('图片加载失败：未登录或token无效');
-    //   return;
-    // }
-
+    final url =
+        '${widget._apiClient.baseUrl}/gateway/sys/api/v1/images/${widget.objectKey}';
+    final authInfo = Provider.of<AuthProvider>(
+      context,
+      listen: false,
+    ).authService;
+    final token = authInfo.token;
     final headers = {ApiClient.tokenKey: token};
-    final ts = DateTime.now().millisecondsSinceEpoch;
-    _logger.info('[$ts] 开始加载图片 ==> url: $url, objectKey: ${widget.objectKey}');
-    
+
+    _logger.info(
+      '[${widget.id ?? _ts}]  开始加载图片 ==> url: $url, objectKey: ${widget.objectKey}, headers: $headers',
+    );
+
+    if (token == null || token.isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = '未登录或token无效';
+      });
+      _logger.warning('[${widget.id ?? _ts}] 图片加载失败：$_errorMessage');
+      return;
+    }
+
     try {
       final response = await Dio().request(
         url,
         options: Options(
-          method: 'GET', 
-          headers: {ApiClient.tokenKey: token},
+          method: 'GET',
+          headers: headers,
           responseType: ResponseType.bytes, // 明确指定响应类型为字节
         ),
       );
-      
-      _logger.info('[$ts] 图片加载成功 ==> 响应状态: ${response.statusCode}, 数据大小: ${response.data?.length ?? 0} 字节');
-      
+
+      _logger.info(
+        '[${widget.id ?? _ts}] 图片加载成功 ==> 响应状态: ${response.statusCode}, 数据大小: ${response.data?.length ?? 0} 字节',
+      );
+
       if (response.data != null && response.data is List<int>) {
         setState(() {
           _imageBytes = Uint8List.fromList(response.data);
           _isLoading = false;
           _errorMessage = null;
         });
-        _logger.info('[$ts] 图片数据设置成功，大小: ${_imageBytes!.length} 字节');
+        _logger.info(
+          '[${widget.id ?? _ts}] 图片数据设置成功，大小: ${_imageBytes!.length} 字节',
+        );
       } else {
         setState(() {
           _isLoading = false;
           _errorMessage = '服务器返回的数据格式无效';
         });
-        _logger.severe('[$ts] 图片加载失败：服务器返回的数据格式无效');
+        _logger.severe('[${widget.id ?? _ts}] 图片加载失败：$_errorMessage');
       }
     } catch (e, stack) {
       setState(() {
         _isLoading = false;
-        _errorMessage = '图片加载失败: $e';
+        _errorMessage = '$e\n$stack';
       });
-      _logger.severe('[$ts] 图片加载失败: $e\n$stack');
+      _logger.severe('[${widget.id ?? _ts}] 图片加载失败: $_errorMessage');
     }
   }
 
@@ -126,10 +134,7 @@ class _SenseImageState extends State<SenseImage> {
               SizedBox(height: 4),
               Text(
                 '加载中...',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -149,18 +154,11 @@ class _SenseImageState extends State<SenseImage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 24,
-                color: Colors.grey[600],
-              ),
+              Icon(Icons.error_outline, size: 24, color: Colors.grey[600]),
               SizedBox(height: 4),
               Text(
                 '加载失败',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -188,10 +186,7 @@ class _SenseImageState extends State<SenseImage> {
               SizedBox(height: 4),
               Text(
                 '无图片',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -205,7 +200,7 @@ class _SenseImageState extends State<SenseImage> {
       height: widget.height,
       fit: widget.fit,
       errorBuilder: (context, error, stackTrace) {
-        _logger.severe('Image.memory 渲染失败: $error');
+        _logger.severe('[${widget.id ?? _ts}] Image.memory 渲染失败: $error');
         return Container(
           width: widget.width,
           height: widget.height,
@@ -217,18 +212,11 @@ class _SenseImageState extends State<SenseImage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.broken_image,
-                  size: 24,
-                  color: Colors.grey[600],
-                ),
+                Icon(Icons.broken_image, size: 24, color: Colors.grey[600]),
                 SizedBox(height: 4),
                 Text(
                   '图片损坏',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
                 ),
               ],
             ),

@@ -58,7 +58,8 @@ class PushData extends PersonInfo {
     }
 
     return PushData(
-      name: json['name']?.toString() ?? '未知',
+      name: json['particular']?['portrait']?['name']?.toString() ?? 
+            json['name']?.toString() ?? '未知',
       serialNumber: json['serialNumber'] ?? '',
       objectId: json['objectId'] ?? '',
       eventId: json['eventId'] ?? '',
