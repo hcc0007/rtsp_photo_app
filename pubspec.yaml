@@ -53,6 +53,7 @@ dependencies:
 
   # 日志管理
   logging_flutter: ^3.0.0
+  logging: ^1.2.0
 
   # Additional dependencies
   device_info_plus: ^10.1.0

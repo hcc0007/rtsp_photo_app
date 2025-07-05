@@ -12,6 +12,51 @@ class GlobalLogManager {
 
   List<String> get logs => List.unmodifiable(_logs);
 
+  static void initialize() {
+    // 日志系统初始化（必须最早执行）
+    Logger.root.level = Level.ALL;
+    Logger.root.onRecord.listen((record) {
+      // 全局统一日志池 - 只监听一次
+      GlobalLogManager().addLog(record);
+
+      // 格式化日志输出
+      final timestamp =
+          '${record.time.hour.toString().padLeft(2, '0')}:'
+          '${record.time.minute.toString().padLeft(2, '0')}:'
+          '${record.time.second.toString().padLeft(2, '0')}';
+
+      // 根据日志级别使用不同的颜色和图标
+      String prefix;
+      switch (record.level) {
+        case Level.SEVERE:
+          prefix = '🔴 [ERROR]';
+          break;
+        case Level.WARNING:
+          prefix = '🟡 [WARN]';
+          break;
+        case Level.INFO:
+          prefix = '🔵 [INFO]';
+          break;
+        case Level.FINE:
+          prefix = '🟢 [DEBUG]';
+          break;
+        default:
+          prefix = '⚪ [LOG]';
+      }
+
+      // 输出到控制台
+      print('$prefix $timestamp [${record.loggerName}] ${record.message}');
+
+      // 如果有异常信息，也输出
+      if (record.error != null) {
+        print('   🔍 异常详情: ${record.error}');
+      }
+      if (record.stackTrace != null) {
+        print('   📍 堆栈跟踪: ${record.stackTrace}');
+      }
+    });
+  }
+
   void addLog(LogRecord record) {
     final logEntry = _formatLogRecord(record);
     // 将新日志插入到列表开头，实现倒序
@@ -28,10 +73,11 @@ class GlobalLogManager {
   }
 
   String _formatLogRecord(LogRecord record) {
-    final timestamp = '${record.time.hour.toString().padLeft(2, '0')}:'
+    final timestamp =
+        '${record.time.hour.toString().padLeft(2, '0')}:'
         '${record.time.minute.toString().padLeft(2, '0')}:'
         '${record.time.second.toString().padLeft(2, '0')}';
-    
+
     String levelStr;
     switch (record.level) {
       case Level.SEVERE:
@@ -49,7 +95,7 @@ class GlobalLogManager {
       default:
         levelStr = 'LOG';
     }
-    
+
     return '[$timestamp] [${record.loggerName}] $levelStr: ${record.message}';
   }
 
@@ -67,12 +113,12 @@ class GlobalLogManager {
   Future<String?> exportLogs() async {
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final timestamp = DateTime.now().toIso8601String();
       final file = File('${directory.path}/app_logs_$timestamp.txt');
-      
+
       final logContent = _logs.join('\n');
       await file.writeAsString(logContent);
-      
+
       return file.path;
     } catch (e) {
       print('导出日志失败: $e');
@@ -104,6 +150,8 @@ class GlobalLogManager {
 
   // 按关键词搜索日志
   List<String> searchLogs(String keyword) {
-    return _logs.where((log) => log.toLowerCase().contains(keyword.toLowerCase())).toList();
+    return _logs
+        .where((log) => log.toLowerCase().contains(keyword.toLowerCase()))
+        .toList();
   }
-} 
+}

@@ -56,18 +56,18 @@ class _SenseImageState extends State<SenseImage> {
     }
 
     // 动态获取服务器地址
-    final serverUrl = await AppConfig.getFullServerUrl();
+    final apiUrl = await AppConfig.getFullServerUrl();
 
     // 检查服务器地址是否发生变化
     if (_lastServerUrl != null &&
-        _lastServerUrl == serverUrl &&
+        _lastServerUrl == apiUrl &&
         _imageBytes != null) {
       // 服务器地址没有变化，且图片已加载，不需要重新加载
       return;
     }
 
-    _lastServerUrl = serverUrl;
-    final url = '$serverUrl/gateway/sys/api/v1/images/${widget.objectKey}';
+    _lastServerUrl = apiUrl;
+    final url = '$apiUrl/gateway/sys/api/v1/images/${widget.objectKey}';
 
     final authInfo = Provider.of<AuthProvider>(
       context,

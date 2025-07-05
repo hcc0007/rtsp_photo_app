@@ -108,23 +108,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 barrierDismissible: false,
                 builder: (context) => LoginDialog(),
               );
-              
+
               if (loginResult != null) {
                 final username = loginResult['username']!;
                 final password = loginResult['password']!;
-                
+
                 final authProvider = Provider.of<AuthProvider>(
                   context,
                   listen: false,
                 );
-                
+
                 final loginSuccess = await authProvider.login(
                   username: username,
                   password: password,
                 );
-                
+
                 if (!mounted) return;
-                
+
                 if (loginSuccess) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -169,14 +169,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               );
-              
+
               if (confirmed == true) {
                 final authProvider = Provider.of<AuthProvider>(
                   context,
                   listen: false,
                 );
                 await authProvider.logout();
-                
+
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -195,35 +195,24 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             // RTSP视频流区域 - 占据屏幕上方30%
-            // Expanded(
-            //   flex: 4,
-            //   child: Container(
-            //     width: double.infinity,
-            //     margin: EdgeInsets.symmetric(horizontal: 24, vertical: 6),
-            //     decoration: BoxDecoration(
-            //       border: Border.all(color: Colors.white, width: 2),
-            //     ),
-            //     child: RtspPlayer(rtspUrl: rtspUrl),
-            //   ),
-            // ),
-
-            // 照片展示区域 - 占据屏幕下方70%
             Expanded(
-              flex: 6,
-              child: PhotoGallery(),
-            ),
-
-            Container(
-              width: double.infinity,
-              height: 50,
-              color: Colors.white,
-              child: Center(
+              flex: 1,
+              child: Container(
+                width: double.infinity,
+                margin: EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                alignment: Alignment.center,
                 child: Text(
-                  '单位名称',
-                  style: TextStyle(color: Colors.black, fontSize: 16),
+                  '监控画面预留区',
+                  style: TextStyle(color: Colors.white, fontSize: MediaQuery.of(context).size.width / 20),
                 ),
               ),
             ),
+
+            // 照片展示区域 - 占据屏幕下方70%
+            Expanded(flex: 2, child: PhotoGallery()),
           ],
         ),
       ),
@@ -247,8 +236,8 @@ class _LoginDialogState extends State<LoginDialog> {
   void initState() {
     super.initState();
     // 使用AppConfig中的默认用户名和密码
-    _usernameController.text = AppConfig.defaultUsername;
-    _passwordController.text = AppConfig.defaultPassword;
+    _usernameController.text = AppConfig.username;
+    _passwordController.text = AppConfig.password;
   }
 
   @override
@@ -294,7 +283,9 @@ class _LoginDialogState extends State<LoginDialog> {
                       _obscurePassword = !_obscurePassword;
                     });
                   },
-                  icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  ),
                 ),
               ),
               obscureText: _obscurePassword,
@@ -314,26 +305,28 @@ class _LoginDialogState extends State<LoginDialog> {
           child: const Text('取消'),
         ),
         ElevatedButton(
-          onPressed: _isLoading ? null : () async {
-            if (_formKey.currentState!.validate()) {
-              setState(() {
-                _isLoading = true;
-              });
-              
-              // 返回用户名和密码
-              Navigator.of(context).pop({
-                'username': _usernameController.text.trim(),
-                'password': _passwordController.text,
-              });
-            }
-          },
-          child: _isLoading 
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Text('登录'),
+          onPressed: _isLoading
+              ? null
+              : () async {
+                  if (_formKey.currentState!.validate()) {
+                    setState(() {
+                      _isLoading = true;
+                    });
+
+                    // 返回用户名和密码
+                    Navigator.of(context).pop({
+                      'username': _usernameController.text.trim(),
+                      'password': _passwordController.text,
+                    });
+                  }
+                },
+          child: _isLoading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('登录'),
         ),
       ],
     );

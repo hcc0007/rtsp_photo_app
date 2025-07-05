@@ -80,10 +80,8 @@ class PersonInfo {
     switch (recordType) {
       case 'portrait_stranger':
         return '陌生人';
-      case 'portrait_known':
-        return '已知人员';
       case 'portrait_normal':
-        return '普通人员';
+        return '白名单';
       default:
         return '未知';
     }
@@ -93,10 +91,8 @@ class PersonInfo {
     switch (recordType) {
       case 'portrait_stranger':
         return Colors.grey;
-      case 'portrait_known':
-        return Colors.blue;
       case 'portrait_normal':
-        return Colors.yellow;
+        return Colors.blue;
       default:
         return Colors.white.withValues(alpha: 0.5);
     }
@@ -105,8 +101,6 @@ class PersonInfo {
   static Color getRecordTypeTextColor(String recordType) {
     switch (recordType) {
       case 'portrait_stranger':
-        return Colors.white;
-      case 'portrait_known':
         return Colors.white;
       case 'portrait_normal':
         return Colors.white;

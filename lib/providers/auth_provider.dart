@@ -8,7 +8,7 @@ import '../models/user_info.dart';
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
   final Logger _logger = Logger('AuthProvider');
-  
+
   bool _isLoading = false;
   bool _isLoggedIn = false;
   String? _errorMessage;
@@ -29,15 +29,15 @@ class AuthProvider with ChangeNotifier {
     _isLoggedIn = _authService.isLoggedIn;
     final userInfoMap = _authService.userInfo;
     _userInfo = userInfoMap != null ? UserInfo.fromJson(userInfoMap) : null;
-    
+
     _logger.info('认证状态初始化完成 - 登录状态: $_isLoggedIn');
-    
+
     // 如果已登录，启动token刷新定时器
     if (_isLoggedIn) {
       _logger.info('用户已登录，启动token刷新定时器');
       _startTokenRefreshTimer();
     }
-    
+
     notifyListeners();
   }
 
@@ -46,15 +46,15 @@ class AuthProvider with ChangeNotifier {
     String? username,
     String? password,
     String? serverIp,
-    String? serverPort,
+    String? apiPort,
   }) async {
-    final loginUsername = username ?? AppConfig.defaultUsername;
-    final loginPassword = password ?? AppConfig.defaultPassword;
-    
+    final loginUsername = username ?? AppConfig.username;
+    final loginPassword = password ?? AppConfig.password;
+
     _logger.info('开始自动登录');
     _logger.info('用户名: $loginUsername');
     _logger.info('服务器: ${_authService.baseUrl}');
-    
+
     _setLoading(true);
     _clearError();
 
@@ -70,12 +70,12 @@ class AuthProvider with ChangeNotifier {
         _isLoggedIn = true;
         _userInfo = UserInfo.fromJson(result['data']);
         _clearError();
-        
+
         _logger.info('自动登录成功');
-        
+
         // 启动token刷新定时器
         _startTokenRefreshTimer();
-        
+
         notifyListeners();
         return true;
       } else {
@@ -98,7 +98,7 @@ class AuthProvider with ChangeNotifier {
     required String username,
     required String password,
     String? serverIp,
-    String? serverPort,
+    String? apiPort,
   }) async {
     _setLoading(true);
     _clearError();
@@ -113,10 +113,10 @@ class AuthProvider with ChangeNotifier {
         _isLoggedIn = true;
         _userInfo = UserInfo.fromJson(result['data']);
         _clearError();
-        
+
         // 启动token刷新定时器
         _startTokenRefreshTimer();
-        
+
         notifyListeners();
         return true;
       } else {
@@ -138,7 +138,7 @@ class AuthProvider with ChangeNotifier {
     try {
       _logger.fine('开始刷新用户信息');
       final result = await _authService.getUserDetail();
-      
+
       if (result['success']) {
         _userInfo = UserInfo.fromJson(result['data']);
         _logger.fine('用户信息刷新成功');
@@ -166,10 +166,10 @@ class AuthProvider with ChangeNotifier {
     _isLoggedIn = false;
     _userInfo = null;
     _clearError();
-    
+
     // 停止token刷新定时器
     _stopTokenRefreshTimer();
-    
+
     _logger.info('登出操作完成');
     notifyListeners();
   }
@@ -206,11 +206,11 @@ class AuthProvider with ChangeNotifier {
   // 启动token刷新定时器
   void _startTokenRefreshTimer() async {
     _stopTokenRefreshTimer(); // 先停止之前的定时器
-    
+
     // 获取用户设置的token刷新间隔
     final refreshInterval = await AppConfig.getTokenRefreshInterval();
     _logger.info('启动token刷新定时器，间隔: ${refreshInterval}ms');
-    
+
     // 使用用户设置的间隔刷新token
     _tokenRefreshTimer = Timer.periodic(
       Duration(milliseconds: refreshInterval),
@@ -239,39 +239,4 @@ class AuthProvider with ChangeNotifier {
       _tokenRefreshTimer = null;
     }
   }
-
-  // 模拟登录成功（用于测试）
-  Future<bool> mockLogin() async {
-    _logger.info('开始模拟登录');
-    _setLoading(true);
-    _clearError();
-
-    try {
-      final result = await _authService.mockLogin();
-
-      if (result['success']) {
-        _isLoggedIn = true;
-        _userInfo = UserInfo.fromJson(result['data']);
-        _clearError();
-        
-        _logger.info('模拟登录成功');
-        
-        // 启动token刷新定时器
-        _startTokenRefreshTimer();
-        
-        notifyListeners();
-        return true;
-      } else {
-        _logger.warning('模拟登录失败: ${result['message']}');
-        _setError(result['message'] ?? '模拟登录失败');
-        return false;
-      }
-    } catch (e) {
-      _logger.severe('模拟登录异常: $e');
-      _setError('模拟登录异常: $e');
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
-} 
+}
