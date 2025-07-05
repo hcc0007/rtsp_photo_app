@@ -111,7 +111,7 @@ class FaceCard extends StatelessWidget {
           //   ),
           // ),
           // 网格布局样式（当前使用）
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
 
           // 姓名
           Text(

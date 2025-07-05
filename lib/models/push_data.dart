@@ -57,9 +57,19 @@ class PushData extends PersonInfo {
       }
     }
 
+    final recordType = json['recordType'] ?? '';
+    String name = '';
+    if (recordType == 'portrait_stranger') {
+      name = '未知';
+    } else {
+      name =
+          json['particular']?['portrait']?['name']?.toString() ??
+          json['name']?.toString() ??
+          '未知';
+    }
+
     return PushData(
-      name: json['particular']?['portrait']?['name']?.toString() ?? 
-            json['name']?.toString() ?? '未知',
+      name: name,
       serialNumber: json['serialNumber'] ?? '',
       objectId: json['objectId'] ?? '',
       eventId: json['eventId'] ?? '',
@@ -78,8 +88,11 @@ class PushData extends PersonInfo {
       receivedTime: int.tryParse(json['receivedTime']?.toString() ?? '0') ?? 0,
       createTime: int.tryParse(json['createTime']?.toString() ?? '0') ?? 0,
       viewInfo: ViewInfo(
-        viewed: int.tryParse(json['viewInfo']?['viewed']?.toString() ?? '0') ?? 0,
-        confirmed: int.tryParse(json['viewInfo']?['confirmed']?.toString() ?? '0') ?? 0,
+        viewed:
+            int.tryParse(json['viewInfo']?['viewed']?.toString() ?? '0') ?? 0,
+        confirmed:
+            int.tryParse(json['viewInfo']?['confirmed']?.toString() ?? '0') ??
+            0,
         username: json['viewInfo']?['username']?.toString(),
         operateTime: json['viewInfo']?['operateTime']?.toString(),
       ),
@@ -100,11 +113,23 @@ class PushData extends PersonInfo {
         ),
         deviceGroup: DeviceGroup(
           identifierId:
-              json['deviceInfo']?['deviceGroup']?['identifierId']?.toString() ?? '',
+              json['deviceInfo']?['deviceGroup']?['identifierId']?.toString() ??
+              '',
           name: json['deviceInfo']?['deviceGroup']?['name']?.toString() ?? '',
-          mapUrl: json['deviceInfo']?['deviceGroup']?['mapUrl']?.toString() ?? '',
-          mapWidth: int.tryParse(json['deviceInfo']?['deviceGroup']?['mapWidth']?.toString() ?? '0') ?? 0,
-          mapHeight: int.tryParse(json['deviceInfo']?['deviceGroup']?['mapHeight']?.toString() ?? '0') ?? 0,
+          mapUrl:
+              json['deviceInfo']?['deviceGroup']?['mapUrl']?.toString() ?? '',
+          mapWidth:
+              int.tryParse(
+                json['deviceInfo']?['deviceGroup']?['mapWidth']?.toString() ??
+                    '0',
+              ) ??
+              0,
+          mapHeight:
+              int.tryParse(
+                json['deviceInfo']?['deviceGroup']?['mapHeight']?.toString() ??
+                    '0',
+              ) ??
+              0,
         ),
       ),
       taskInfo: TaskInfo(
@@ -154,35 +179,85 @@ class PushData extends PersonInfo {
         helmet: json['particular']?['helmet'] ?? '',
         associationId: json['particular']?['associationId'] ?? '',
         portraitDb: PortraitDb(
-          portraitDbId: int.tryParse(json['particular']?['portraitDb']?['portraitDbId']?.toString() ?? '0') ?? 0,
-          identifierId: json['particular']?['portraitDb']?['identifierId']?.toString() ?? '',
+          portraitDbId:
+              int.tryParse(
+                json['particular']?['portraitDb']?['portraitDbId']
+                        ?.toString() ??
+                    '0',
+              ) ??
+              0,
+          identifierId:
+              json['particular']?['portraitDb']?['identifierId']?.toString() ??
+              '',
           libId: json['particular']?['portraitDb']?['libId']?.toString() ?? '',
-          libImportType: json['particular']?['portraitDb']?['libImportType']?.toString() ?? '',
-          featureDbId: json['particular']?['portraitDb']?['featureDbId']?.toString() ?? '',
-          type: int.tryParse(json['particular']?['portraitDb']?['type']?.toString() ?? '0') ?? 0,
+          libImportType:
+              json['particular']?['portraitDb']?['libImportType']?.toString() ??
+              '',
+          featureDbId:
+              json['particular']?['portraitDb']?['featureDbId']?.toString() ??
+              '',
+          type:
+              int.tryParse(
+                json['particular']?['portraitDb']?['type']?.toString() ?? '0',
+              ) ??
+              0,
           name: json['particular']?['portraitDb']?['name']?.toString() ?? '',
-          enableState: int.tryParse(json['particular']?['portraitDb']?['enableState']?.toString() ?? '0') ?? 0,
-          activeState: int.tryParse(json['particular']?['portraitDb']?['activeState']?.toString() ?? '0') ?? 0,
-          activationTime: int.tryParse(json['particular']?['portraitDb']?['activationTime']?.toString() ?? '0') ?? 0,
-          expirationTime: int.tryParse(json['particular']?['portraitDb']?['expirationTime']?.toString() ?? '0') ?? 0,
-          createTime: int.tryParse(json['particular']?['portraitDb']?['createTime']?.toString() ?? '0') ?? 0,
+          enableState:
+              int.tryParse(
+                json['particular']?['portraitDb']?['enableState']?.toString() ??
+                    '0',
+              ) ??
+              0,
+          activeState:
+              int.tryParse(
+                json['particular']?['portraitDb']?['activeState']?.toString() ??
+                    '0',
+              ) ??
+              0,
+          activationTime:
+              int.tryParse(
+                json['particular']?['portraitDb']?['activationTime']
+                        ?.toString() ??
+                    '0',
+              ) ??
+              0,
+          expirationTime:
+              int.tryParse(
+                json['particular']?['portraitDb']?['expirationTime']
+                        ?.toString() ??
+                    '0',
+              ) ??
+              0,
+          createTime:
+              int.tryParse(
+                json['particular']?['portraitDb']?['createTime']?.toString() ??
+                    '0',
+              ) ??
+              0,
         ),
         portrait: Portrait(
-          portraitId: int.tryParse(json['particular']?['portrait']?['portraitId']?.toString() ?? '0'),
-          identifierId: json['particular']?['portrait']?['identifierId']?.toString(),
+          portraitId: int.tryParse(
+            json['particular']?['portrait']?['portraitId']?.toString() ?? '0',
+          ),
+          identifierId: json['particular']?['portrait']?['identifierId']
+              ?.toString(),
           identity: json['particular']?['portrait']?['identity']?.toString(),
           name: json['particular']?['portrait']?['name']?.toString(),
           gender: json['particular']?['portrait']?['gender']?.toString(),
           phone: json['particular']?['portrait']?['phone']?.toString(),
           company: json['particular']?['portrait']?['company']?.toString(),
           dept: json['particular']?['portrait']?['dept']?.toString(),
-          employeeNumber: json['particular']?['portrait']?['employeeNumber']?.toString(),
+          employeeNumber: json['particular']?['portrait']?['employeeNumber']
+              ?.toString(),
           idNumber: json['particular']?['portrait']?['idNumber']?.toString(),
           remark: json['particular']?['portrait']?['remark']?.toString(),
           picUrl: json['particular']?['portrait']?['picUrl']?.toString(),
-          activationTime: json['particular']?['portrait']?['activationTime']?.toString(),
-          expirationTime: json['particular']?['portrait']?['expirationTime']?.toString(),
-          activeState: json['particular']?['portrait']?['activeState']?.toString(),
+          activationTime: json['particular']?['portrait']?['activationTime']
+              ?.toString(),
+          expirationTime: json['particular']?['portrait']?['expirationTime']
+              ?.toString(),
+          activeState: json['particular']?['portrait']?['activeState']
+              ?.toString(),
         ),
       ),
       applet: Applet(

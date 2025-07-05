@@ -60,7 +60,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final result = await _authService.login(
-        username: loginUsername,
+        account: loginUsername,
         password: loginPassword,
       );
 
@@ -105,7 +105,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final result = await _authService.login(
-        username: username,
+        account: username,
         password: password,
       );
 

@@ -150,10 +150,11 @@ class AuthService {
 
   // 登录
   Future<Map<String, dynamic>> login({
-    required String username,
+    required String account,
     required String password,
   }) async {
     try {
+      _logger.info('登录账号表单: username: $account, password: $password');
       // 1. 获取RSA公钥和rsaId
       final rsaInfo = await _fetchRsaPub();
       if (rsaInfo == null) {
@@ -167,7 +168,7 @@ class AuthService {
       }
 
       final loginData = {
-          'username': username,
+          'account': account,
           'password': encryptedPassword,
           'rsaId': rsaInfo['rsaId'],
           'grantType': 'password',
