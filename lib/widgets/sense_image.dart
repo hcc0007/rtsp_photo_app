@@ -5,12 +5,12 @@ import 'package:dio/dio.dart';
 import 'package:provider/provider.dart';
 import 'package:rtsp_photo_app/providers/auth_provider.dart';
 import 'package:rtsp_photo_app/services/http_client.dart';
+import 'package:rtsp_photo_app/config/app_config.dart';
 import 'package:logging/logging.dart';
 
 final _logger = Logger('SenseImage');
 
 class SenseImage extends StatefulWidget {
-  final _apiClient = ApiClient();
   final String objectKey;
   final double? width;
   final double? height;
@@ -34,6 +34,7 @@ class _SenseImageState extends State<SenseImage> {
   Uint8List? _imageBytes;
   bool _isLoading = true;
   String? _errorMessage;
+  String? _lastServerUrl;
   final String _ts = DateTime.now().millisecondsSinceEpoch.toString();
 
   @override
@@ -52,8 +53,18 @@ class _SenseImageState extends State<SenseImage> {
       return;
     }
 
-    final url =
-        '${widget._apiClient.baseUrl}/gateway/sys/api/v1/images/${widget.objectKey}';
+    // 动态获取服务器地址
+    final serverUrl = await AppConfig.getFullServerUrl();
+    
+    // 检查服务器地址是否发生变化
+    if (_lastServerUrl != null && _lastServerUrl == serverUrl && _imageBytes != null) {
+      // 服务器地址没有变化，且图片已加载，不需要重新加载
+      return;
+    }
+    
+    _lastServerUrl = serverUrl;
+    final url = '$serverUrl/gateway/sys/api/v1/images/${widget.objectKey}';
+    
     final authInfo = Provider.of<AuthProvider>(
       context,
       listen: false,
@@ -115,32 +126,56 @@ class _SenseImageState extends State<SenseImage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Container(
-        width: widget.width,
-        height: widget.height,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[400]!),
-                ),
+    return FutureBuilder<String>(
+      future: AppConfig.getFullServerUrl(),
+      builder: (context, snapshot) {
+        // 如果服务器地址发生变化，重新加载图片
+        if (snapshot.hasData && snapshot.data != null) {
+          final currentServerUrl = snapshot.data!;
+          // 检查服务器地址是否发生变化
+          if (_lastServerUrl != null && _lastServerUrl != currentServerUrl) {
+            // 服务器地址发生变化，重新加载图片
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _loadImage();
+              }
+            });
+          } else if (_lastServerUrl == null) {
+            // 首次加载
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _loadImage();
+              }
+            });
+          }
+        }
+
+        if (_isLoading) {
+          return Container(
+            width: widget.width,
+            height: widget.height,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[400]!),
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '加载中...',
+                    style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                  ),
+                ],
               ),
-              SizedBox(height: 4),
-              Text(
-                '加载中...',
-                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+            ),
+          );
+        }
 
     if (_errorMessage != null) {
       return Container(
@@ -154,12 +189,12 @@ class _SenseImageState extends State<SenseImage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 24, color: Colors.grey[600]),
-              SizedBox(height: 4),
-              Text(
-                '加载失败',
-                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-              ),
+              Icon(Icons.person, size: 48, color: Colors.grey[600]),
+              // SizedBox(height: 4),
+              // Text(
+              //   '加载失败',
+              //   style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+              // ),
             ],
           ),
         ),
@@ -178,49 +213,85 @@ class _SenseImageState extends State<SenseImage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.image_not_supported,
-                size: 24,
-                color: Colors.grey[600],
-              ),
-              SizedBox(height: 4),
-              Text(
-                '无图片',
-                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-              ),
+              Icon(Icons.person, size: 48, color: Colors.grey[600]),
+              // Icon(
+              //   Icons.image_not_supported,
+              //   size: 24,
+              //   color: Colors.grey[600],
+              // ),
+              // SizedBox(height: 4),
+              // Text(
+              //   '无图片',
+              //   style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+              // ),
             ],
           ),
         ),
       );
     }
 
-    return Image.memory(
-      _imageBytes!,
-      width: widget.width,
-      height: widget.height,
-      fit: widget.fit,
-      errorBuilder: (context, error, stackTrace) {
-        _logger.severe('[${widget.id ?? _ts}] Image.memory 渲染失败: $error');
-        return Container(
+        if (_errorMessage != null) {
+          return Container(
+            width: widget.width,
+            height: widget.height,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person, size: 48, color: Colors.grey[600]),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (_imageBytes == null || _imageBytes!.isEmpty) {
+          return Container(
+            width: widget.width,
+            height: widget.height,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person, size: 48, color: Colors.grey[600]),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Image.memory(
+          _imageBytes!,
           width: widget.width,
           height: widget.height,
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.broken_image, size: 24, color: Colors.grey[600]),
-                SizedBox(height: 4),
-                Text(
-                  '图片损坏',
-                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+          fit: widget.fit,
+          errorBuilder: (context, error, stackTrace) {
+            _logger.severe('[${widget.id ?? _ts}] Image.memory 渲染失败: $error');
+            return Container(
+              width: widget.width,
+              height: widget.height,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.person, size: 48, color: Colors.grey[600]),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

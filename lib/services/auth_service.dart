@@ -166,14 +166,19 @@ class AuthService {
         return {'success': false, 'message': '密码加密失败'};
       }
 
-      // 3. 发送登录请求
-      final response = await _httpClient.post(
-        '/gateway/auth/api/v1/login',
-        data: {
+      final loginData = {
           'username': username,
           'password': encryptedPassword,
           'rsaId': rsaInfo['rsaId'],
-        },
+          'grantType': 'password',
+        };
+
+      _logger.info('登录请求数据: $loginData');
+
+      // 3. 发送登录请求
+      final response = await _httpClient.post(
+        '/gateway/auth/api/v1/login',
+        data: loginData,
       );
 
       final responseData = response.data as Map<String, dynamic>;
