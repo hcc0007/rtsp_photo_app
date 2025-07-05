@@ -241,6 +241,51 @@ class PushProvider with ChangeNotifier {
     addPushDataAsync(data);
   }
 
+  /// 调试方法：临时禁用过滤，直接添加数据
+  void addPushDataWithoutFilter(PushData data) {
+    print('=== addPushDataWithoutFilter 开始 ===');
+    print(
+      'addPushDataWithoutFilter: objectId=${data.objectId}, createTime=${data.createTime}, recordType=${data.recordType}',
+    );
+
+    print('开始添加数据到列表，当前列表长度: ${_pushData.length}');
+    _pushData.insert(0, data);
+    print('数据已添加到列表，新长度: ${_pushData.length}');
+
+    notifyListeners();
+    print('已通知监听器');
+    print('=== addPushDataWithoutFilter 结束 ===');
+  }
+
+  /// 调试方法：获取当前状态信息
+  Map<String, dynamic> getDebugInfo() {
+    return {
+      'pushDataCount': _pushData.length,
+      'filterRecordCount': _lastPersonTime.length,
+      'displayTimersCount': _displayTimers.length,
+      'displayStartTimeCount': _displayStartTime.length,
+      'isRunning': _running,
+      'currentUserId': _currentUserId,
+      'error': _error,
+      'lastPersonTime': Map.from(_lastPersonTime),
+    };
+  }
+
+  /// 调试方法：清空所有数据
+  void clearAllData() {
+    print('清空所有推送数据');
+    _pushData.clear();
+    
+    // 取消所有定时器
+    for (final timer in _displayTimers.values) {
+      timer.cancel();
+    }
+    _displayTimers.clear();
+    _displayStartTime.clear();
+    
+    notifyListeners();
+  }
+
   /// 移除推送数据
   void _removePushData(String personId) {
     _pushData.removeWhere((data) => _getPersonIdentifier(data) == personId);

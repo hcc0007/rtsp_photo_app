@@ -5,6 +5,33 @@ import 'dart:convert';
 final Logger _logger = Logger('AppConfig');
 
 class AppConfig {
+  static final Map<String, dynamic> _default = {
+    'apiPort': '8080',
+    'apiUrl': 'http://192.168.3.169',
+    'defaultRtspUrl': 'rtsp://192.168.3.169:8554/mystream',
+    'tokenRefreshInterval': 25 * 60 * 1000,
+    'connectTimeout': 100000,
+    'receiveTimeout': 100000,
+    'knownPersonDisplayTime': 3000,
+    'strangerDisplayTime': 10000,
+    'normalPersonDisplayTime': 5000,
+    'knownPersonFilterTimeWindow': 60000,
+    'strangerFilterTimeWindow': 30000,
+    'knownPersonMaxDisplayCount': 5,
+    'strangerMaxDisplayCount': 10,
+    'username': 'ops',
+    'password': 'Test@001',
+    'token': '',
+    'logLevel': 'INFO',
+    'logEnabled': true,
+    'logToFile': false,
+    'logMaxFileSize': 10 * 1024 * 1024,
+    'logMaxFileCount': 5,
+    'company': '云南省委',
+    'videoAspectRatio': 16 / 9,
+    'videoSectionRatio': 0.3,
+    'photoSectionRatio': 0.7,
+  };
   static String company = '云南省委';
 
   // 人脸推送过滤配置
@@ -100,63 +127,67 @@ class AppConfig {
       final prefs = await SharedPreferences.getInstance();
 
       // 检查并设置默认值（如果不存在）
-      await _setDefaultIfNotExists(prefs, _keyServerUrl, apiUrl);
-      await _setDefaultIfNotExists(prefs, _keyServerPort, apiPort);
-      await _setDefaultIfNotExists(prefs, _keyRtspUrl, defaultRtspUrl);
+      await _setDefaultIfNotExists(prefs, _keyServerUrl, _default['apiUrl']);
+      await _setDefaultIfNotExists(prefs, _keyServerPort, _default['apiPort']);
+      await _setDefaultIfNotExists(
+        prefs,
+        _keyRtspUrl,
+        _default['defaultRtspUrl'],
+      );
       await _setDefaultIfNotExists(
         prefs,
         _keyTokenRefreshInterval,
-        tokenRefreshInterval,
+        _default['tokenRefreshInterval'],
       );
       await _setDefaultIfNotExists(
         prefs,
         _keyKnownPersonDisplayTime,
-        knownPersonDisplayTime,
+        _default['knownPersonDisplayTime'],
       );
       await _setDefaultIfNotExists(
         prefs,
         _keyStrangerDisplayTime,
-        strangerDisplayTime,
+        _default['strangerDisplayTime'],
       );
       await _setDefaultIfNotExists(
         prefs,
         _keyNormalPersonDisplayTime,
-        normalPersonDisplayTime,
+        _default['normalPersonDisplayTime'],
       );
 
       // 新增：设置根据人员类型的过滤时间窗口默认值
       await _setDefaultIfNotExists(
         prefs,
         _keyKnownPersonFilterTimeWindow,
-        knownPersonFilterTimeWindow,
+        _default['knownPersonFilterTimeWindow'],
       );
       await _setDefaultIfNotExists(
         prefs,
         _keyStrangerFilterTimeWindow,
-        strangerFilterTimeWindow,
+        _default['strangerFilterTimeWindow'],
       );
       await _setDefaultIfNotExists(
         prefs,
         _keyNormalPersonFilterTimeWindow,
-        normalPersonFilterTimeWindow,
+        _default['normalPersonFilterTimeWindow'],
       );
 
       // 新增：设置展示数量限制默认值
       await _setDefaultIfNotExists(
         prefs,
         _keyKnownPersonMaxDisplayCount,
-        knownPersonMaxDisplayCount,
+        _default['knownPersonMaxDisplayCount'],
       );
       await _setDefaultIfNotExists(
         prefs,
         _keyStrangerMaxDisplayCount,
-        strangerMaxDisplayCount,
+        _default['strangerMaxDisplayCount'],
       );
 
       // 用户名、密码、token
-      await _setDefaultIfNotExists(prefs, _keyUserName, username);
-      await _setDefaultIfNotExists(prefs, _keyPassword, password);
-      await _setDefaultIfNotExists(prefs, _keyToken, token);
+      await _setDefaultIfNotExists(prefs, _keyUserName, _default['username']);
+      await _setDefaultIfNotExists(prefs, _keyPassword, _default['password']);
+      await _setDefaultIfNotExists(prefs, _keyToken, _default['token']);
 
       // 初始化Logger配置
       await _setDefaultIfNotExists(prefs, _keyLogLevel, defaultLogLevel.name);
@@ -243,34 +274,49 @@ class AppConfig {
 
       final prefs = await SharedPreferences.getInstance();
 
-      await prefs.setString(_keyServerUrl, apiUrl);
-      await prefs.setString(_keyServerPort, apiPort);
-      await prefs.setString(_keyRtspUrl, defaultRtspUrl);
-      await prefs.setInt(_keyTokenRefreshInterval, tokenRefreshInterval);
-      await prefs.setInt(_keyKnownPersonDisplayTime, knownPersonDisplayTime);
-      await prefs.setInt(_keyStrangerDisplayTime, strangerDisplayTime);
-      await prefs.setInt(_keyNormalPersonDisplayTime, normalPersonDisplayTime);
+      await prefs.setString(_keyServerUrl, _default['apiUrl']);
+      await prefs.setString(_keyServerPort, _default['apiPort']);
+      await prefs.setString(_keyRtspUrl, _default['defaultRtspUrl']);
+      await prefs.setInt(
+        _keyTokenRefreshInterval,
+        _default['tokenRefreshInterval'],
+      );
+      await prefs.setInt(
+        _keyKnownPersonDisplayTime,
+        _default['knownPersonDisplayTime'],
+      );
+      await prefs.setInt(
+        _keyStrangerDisplayTime,
+        _default['strangerDisplayTime'],
+      );
+      await prefs.setInt(
+        _keyNormalPersonDisplayTime,
+        _default['normalPersonDisplayTime'],
+      );
 
       // 新增：重置根据人员类型的过滤时间窗口配置
       await prefs.setInt(
         _keyKnownPersonFilterTimeWindow,
-        knownPersonFilterTimeWindow,
+        _default['knownPersonFilterTimeWindow'],
       );
       await prefs.setInt(
         _keyStrangerFilterTimeWindow,
-        strangerFilterTimeWindow,
+        _default['strangerFilterTimeWindow'],
       );
       await prefs.setInt(
         _keyNormalPersonFilterTimeWindow,
-        normalPersonFilterTimeWindow,
+        _default['normalPersonFilterTimeWindow'],
       );
 
       // 新增：重置展示数量限制配置
       await prefs.setInt(
         _keyKnownPersonMaxDisplayCount,
-        knownPersonMaxDisplayCount,
+        _default['knownPersonMaxDisplayCount'],
       );
-      await prefs.setInt(_keyStrangerMaxDisplayCount, strangerMaxDisplayCount);
+      await prefs.setInt(
+        _keyStrangerMaxDisplayCount,
+        _default['strangerMaxDisplayCount'],
+      );
 
       updateAppConfig();
 
@@ -285,12 +331,12 @@ class AppConfig {
   static Future<String> getServerUrl() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final value = prefs.getString(_keyServerUrl) ?? apiUrl;
+      final value = prefs.getString(_keyServerUrl);
       _logger.fine('获取服务器地址: $value');
-      return value;
+      return (value == null || value.isEmpty) ? _default['apiUrl'] : value;
     } catch (e) {
       _logger.warning('获取服务器地址失败，使用默认值', e);
-      return apiUrl;
+      return _default['apiUrl'];
     }
   }
 
@@ -298,12 +344,12 @@ class AppConfig {
   static Future<String> getServerPort() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final value = prefs.getString(_keyServerPort) ?? apiPort;
+      final value = prefs.getString(_keyServerPort);
       _logger.fine('获取服务器端口: $value');
-      return value;
+      return (value == null || value.isEmpty) ? _default['apiPort'] : value;
     } catch (e) {
       _logger.warning('获取服务器端口失败，使用默认值', e);
-      return apiPort;
+      return _default['apiPort'];
     }
   }
 
@@ -311,12 +357,12 @@ class AppConfig {
   static Future<String> getRtspUrl() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final value = prefs.getString(_keyRtspUrl) ?? defaultRtspUrl;
+      final value = prefs.getString(_keyRtspUrl) ?? _default['defaultRtspUrl'];
       _logger.fine('获取RTSP地址: $value');
       return value;
     } catch (e) {
       _logger.warning('获取RTSP地址失败，使用默认值', e);
-      return defaultRtspUrl;
+      return _default['defaultRtspUrl'];
     }
   }
 
@@ -325,12 +371,13 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       final value =
-          prefs.getInt(_keyTokenRefreshInterval) ?? tokenRefreshInterval;
+          prefs.getInt(_keyTokenRefreshInterval) ??
+          _default['tokenRefreshInterval'];
       _logger.fine('获取Token刷新间隔: ${value}ms');
       return value;
     } catch (e) {
       _logger.warning('获取Token刷新间隔失败，使用默认值', e);
-      return tokenRefreshInterval;
+      return _default['tokenRefreshInterval'];
     }
   }
 
@@ -347,7 +394,6 @@ class AppConfig {
         fullUrl = 'https://$apiUrl';
       }
 
-      _logger.fine('构建完整服务器URL: $fullUrl');
       return fullUrl;
     } catch (e) {
       _logger.warning('构建服务器URL失败', e);
@@ -359,12 +405,13 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       final value =
-          prefs.getInt(_keyKnownPersonDisplayTime) ?? knownPersonDisplayTime;
+          prefs.getInt(_keyKnownPersonDisplayTime) ??
+          _default['knownPersonDisplayTime'];
       _logger.fine('获取已知人员显示时间: ${value}ms');
       return value;
     } catch (e) {
       _logger.warning('获取已知人员显示时间失败，使用默认值', e);
-      return knownPersonDisplayTime;
+      return _default['knownPersonDisplayTime'];
     }
   }
 
@@ -372,12 +419,13 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       final value =
-          prefs.getInt(_keyStrangerDisplayTime) ?? strangerDisplayTime;
+          prefs.getInt(_keyStrangerDisplayTime) ??
+          _default['strangerDisplayTime'];
       _logger.fine('获取陌生人显示时间: ${value}ms');
       return value;
     } catch (e) {
       _logger.warning('获取陌生人显示时间失败，使用默认值', e);
-      return strangerDisplayTime;
+      return _default['strangerDisplayTime'];
     }
   }
 
@@ -385,12 +433,13 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       final value =
-          prefs.getInt(_keyNormalPersonDisplayTime) ?? normalPersonDisplayTime;
+          prefs.getInt(_keyNormalPersonDisplayTime) ??
+          _default['normalPersonDisplayTime'];
       _logger.fine('获取普通人员显示时间: ${value}ms');
       return value;
     } catch (e) {
       _logger.warning('获取普通人员显示时间失败，使用默认值', e);
-      return normalPersonDisplayTime;
+      return _default['normalPersonDisplayTime'];
     }
   }
 
@@ -400,12 +449,12 @@ class AppConfig {
       final prefs = await SharedPreferences.getInstance();
       final value =
           prefs.getInt(_keyKnownPersonFilterTimeWindow) ??
-          knownPersonFilterTimeWindow;
+          _default['knownPersonFilterTimeWindow'];
       _logger.fine('获取白名单人员过滤时间窗口: ${value}ms');
       return value;
     } catch (e) {
       _logger.warning('获取白名单人员过滤时间窗口失败，使用默认值', e);
-      return knownPersonFilterTimeWindow;
+      return _default['knownPersonFilterTimeWindow'];
     }
   }
 
@@ -414,12 +463,12 @@ class AppConfig {
       final prefs = await SharedPreferences.getInstance();
       final value =
           prefs.getInt(_keyStrangerFilterTimeWindow) ??
-          strangerFilterTimeWindow;
+          _default['strangerFilterTimeWindow'];
       _logger.fine('获取陌生人过滤时间窗口: ${value}ms');
       return value;
     } catch (e) {
       _logger.warning('获取陌生人过滤时间窗口失败，使用默认值', e);
-      return strangerFilterTimeWindow;
+      return _default['strangerFilterTimeWindow'];
     }
   }
 
@@ -428,12 +477,12 @@ class AppConfig {
       final prefs = await SharedPreferences.getInstance();
       final value =
           prefs.getInt(_keyNormalPersonFilterTimeWindow) ??
-          normalPersonFilterTimeWindow;
+          _default['normalPersonFilterTimeWindow'];
       _logger.fine('获取普通人员过滤时间窗口: ${value}ms');
       return value;
     } catch (e) {
       _logger.warning('获取普通人员过滤时间窗口失败，使用默认值', e);
-      return normalPersonFilterTimeWindow;
+      return _default['normalPersonFilterTimeWindow'];
     }
   }
 
@@ -443,12 +492,12 @@ class AppConfig {
       final prefs = await SharedPreferences.getInstance();
       final value =
           prefs.getInt(_keyKnownPersonMaxDisplayCount) ??
-          knownPersonMaxDisplayCount;
+          _default['knownPersonMaxDisplayCount'];
       _logger.fine('获取白名单最大展示数量: $value');
       return value;
     } catch (e) {
       _logger.warning('获取白名单最大展示数量失败，使用默认值', e);
-      return knownPersonMaxDisplayCount;
+      return _default['knownPersonMaxDisplayCount'];
     }
   }
 
@@ -456,7 +505,8 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       final value =
-          prefs.getInt(_keyStrangerMaxDisplayCount) ?? strangerMaxDisplayCount;
+          prefs.getInt(_keyStrangerMaxDisplayCount) ??
+          _default['strangerMaxDisplayCount'];
       _logger.fine('获取陌生人最大展示数量: $value');
       return value;
     } catch (e) {

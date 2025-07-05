@@ -21,7 +21,7 @@ class PhotoGallery extends StatefulWidget {
 }
 
 class _PhotoGalleryState extends State<PhotoGallery> {
-  // 调试模式，开发时可以设为 true
+  // 调试模式(不过滤)，开发时可以设为 true
   static const bool _debugMode = false;
 
   // 推送数据流订阅
@@ -48,11 +48,20 @@ class _PhotoGalleryState extends State<PhotoGallery> {
             '[$ts] 准备添加到PushProvider: objectId=${pushData.objectId}',
           );
           try {
-            Provider.of<PushProvider>(
-              context,
-              listen: false,
-            ).addPushData(pushData);
-            _logger.info('[$ts] 已调用addPushData');
+            // 调试模式：临时禁用过滤
+            if (_debugMode) {
+              Provider.of<PushProvider>(
+                context,
+                listen: false,
+              ).addPushDataWithoutFilter(pushData);
+              _logger.info('[$ts] 已调用addPushDataWithoutFilter（调试模式）');
+            } else {
+              Provider.of<PushProvider>(
+                context,
+                listen: false,
+              ).addPushData(pushData);
+              _logger.info('[$ts] 已调用addPushData');
+            }
           } catch (e) {
             _logger.severe('[$ts] 调用addPushData时出错: $e');
           }
@@ -100,8 +109,23 @@ class _PhotoGalleryState extends State<PhotoGallery> {
         builder: (context, provider, child) {
           final pushDataList = provider.pushData;
 
+          // 调试模式：显示调试信息
+          if (_debugMode) {
+            final debugInfo = provider.getDebugInfo();
+            print('=== 调试信息 ===');
+            print('推送数据数量: ${debugInfo['pushDataCount']}');
+            print('过滤记录数量: ${debugInfo['filterRecordCount']}');
+            print('显示定时器数量: ${debugInfo['displayTimersCount']}');
+            print('是否运行中: ${debugInfo['isRunning']}');
+            print('当前用户ID: ${debugInfo['currentUserId']}');
+            print('错误信息: ${debugInfo['error']}');
+            print('================');
+          }
+
           if (pushDataList.isEmpty) {
-            return SizedBox();
+            return _debugMode 
+              ? _buildDebugEmptyState(provider)
+              : SizedBox();
           }
 
           return Container(
@@ -109,6 +133,9 @@ class _PhotoGalleryState extends State<PhotoGallery> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 调试模式：显示调试按钮
+                if (_debugMode) _buildDebugControls(provider),
+                
                 // 白名单区域
                 SizedBox(height: 170, child: _buildWhiteList(pushDataList)),
 
@@ -120,6 +147,110 @@ class _PhotoGalleryState extends State<PhotoGallery> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildDebugEmptyState(PushProvider provider) {
+    final debugInfo = provider.getDebugInfo();
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.bug_report,
+            size: 48,
+            color: Colors.white.withValues(alpha: 0.6),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '调试模式 - 暂无数据',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '推送数据数量: ${debugInfo['pushDataCount']}',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+          ),
+          Text(
+            '过滤记录数量: ${debugInfo['filterRecordCount']}',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+          ),
+          Text(
+            '是否运行中: ${debugInfo['isRunning']}',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+          ),
+          if (debugInfo['error'] != null)
+            Text(
+              '错误: ${debugInfo['error']}',
+              style: TextStyle(color: Colors.red.withValues(alpha: 0.8)),
+            ),
+          const SizedBox(height: 16),
+          _buildDebugControls(provider),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebugControls(PushProvider provider) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          ElevatedButton(
+            onPressed: () {
+              provider.clearAllFilters();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('已清空过滤记录')),
+              );
+            },
+            child: Text('清空过滤'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              provider.clearAllData();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('已清空所有数据')),
+              );
+            },
+            child: Text('清空数据'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final debugInfo = provider.getDebugInfo();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('数据: ${debugInfo['pushDataCount']}, 过滤: ${debugInfo['filterRecordCount']}'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            child: Text('状态'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

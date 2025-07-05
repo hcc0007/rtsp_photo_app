@@ -293,7 +293,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               decoration: InputDecoration(
                 labelText: '已知人员显示时间（毫秒）',
                 labelStyle: const TextStyle(color: Colors.grey),
-                hintText: '3000',
+                hintText: '8080',
                 hintStyle: const TextStyle(color: Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),

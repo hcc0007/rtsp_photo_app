@@ -37,6 +37,8 @@ class AuthService {
     // 设置基础URL
     final apiUrl = await _getServerUrl();
     _httpClient.setBaseUrl(apiUrl);
+    
+    _logger.info('AuthService初始化完成 - Token存在: ${_token != null && _token!.isNotEmpty}');
   }
 
   // 重新初始化服务（用于设置更改后）
@@ -50,9 +52,20 @@ class AuthService {
   // 获取服务器URL
   Future<String> _getServerUrl() async {
     // 从AppConfig获取用户设置的服务器URL
-    final apiUrl = await AppConfig.getServerUrl();
-    final apiPort = await AppConfig.getServerPort();
+    String apiUrl = await AppConfig.getServerUrl();
+    String apiPort = await AppConfig.getServerPort();
 
+    // 自动补全协议
+    if (!apiUrl.startsWith('http://') && !apiUrl.startsWith('https://')) {
+      apiUrl = 'http://$apiUrl';
+    }
+
+    // 自动去除端口前的冒号
+    if (apiPort.startsWith(':')) {
+      apiPort = apiPort.substring(1);
+    }
+
+    // 拼接
     if (apiPort.isNotEmpty) {
       return '$apiUrl:$apiPort';
     } else {
@@ -115,8 +128,20 @@ class AuthService {
   }) async {
     try {
       _logger.info('登录账号表单: username: $account, password: $password');
+      
+      // 使用固定的登录超时时间（30秒）
+      const loginTimeout = 30000;
+      _logger.info('登录超时时间: ${loginTimeout}ms');
+      
       // 1. 获取RSA公钥和rsaId
-      final rsaInfo = await _fetchRsaPub();
+      final rsaInfo = await _fetchRsaPub().timeout(
+        const Duration(milliseconds: loginTimeout),
+        onTimeout: () {
+          _logger.severe('获取RSA公钥超时');
+          throw Exception('获取加密公钥超时');
+        },
+      );
+      
       if (rsaInfo == null) {
         return {'success': false, 'message': '获取加密公钥失败'};
       }
@@ -139,10 +164,16 @@ class AuthService {
 
       _logger.info('登录请求数据: $loginData');
 
-      // 3. 发送登录请求
+      // 3. 发送登录请求（带超时）
       final response = await _httpClient.post(
         '/gateway/auth/api/v1/login',
         data: loginData,
+      ).timeout(
+        const Duration(milliseconds: loginTimeout),
+        onTimeout: () {
+          _logger.severe('登录请求超时');
+          throw Exception('登录请求超时');
+        },
       );
 
       final responseData = response.data as Map<String, dynamic>;
@@ -162,6 +193,9 @@ class AuthService {
       }
     } catch (e) {
       _logger.severe('登录失败: $e');
+      if (e.toString().contains('超时')) {
+        return {'success': false, 'message': '登录超时，请检查网络连接'};
+      }
       return {'success': false, 'message': '登录失败: $e'};
     }
   }

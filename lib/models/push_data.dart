@@ -149,12 +149,17 @@ class PushData extends PersonInfo {
           verticeList:
               (json['taskInfo']?['roi']?['verticeList'] as List<dynamic>?)
                   ?.map(
-                    (e) => Map<String, dynamic>.from(e).map(
-                      (k, v) => MapEntry(
-                        k,
-                        v is int ? v : int.tryParse(v.toString()) ?? 0,
-                      ),
-                    ),
+                    (e) {
+                      if (e is Map) {
+                        return Map<String, dynamic>.from(e).map(
+                          (k, v) => MapEntry(
+                            k,
+                            v is int ? v : int.tryParse(v.toString()) ?? 0,
+                          ),
+                        );
+                      }
+                      return <String, int>{};
+                    },
                   )
                   .toList() ??
               [],

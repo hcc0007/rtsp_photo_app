@@ -48,6 +48,12 @@ class AuthProvider with ChangeNotifier {
     String? serverIp,
     String? apiPort,
   }) async {
+    // 如果已经登录，直接返回成功
+    if (_isLoggedIn) {
+      _logger.info('用户已登录，跳过自动登录');
+      return true;
+    }
+
     final loginUsername = username ?? AppConfig.username;
     final loginPassword = password ?? AppConfig.password;
 
@@ -55,7 +61,7 @@ class AuthProvider with ChangeNotifier {
     _logger.info('用户名: $loginUsername');
     _logger.info('服务器: ${_authService.baseUrl}');
 
-    _setLoading(true);
+    // 不设置loading状态，避免阻塞UI
     _clearError();
 
     try {
@@ -88,8 +94,6 @@ class AuthProvider with ChangeNotifier {
       _logger.severe('自动登录异常: $e');
       _setError('登录异常: $e');
       return false;
-    } finally {
-      _setLoading(false);
     }
   }
 
