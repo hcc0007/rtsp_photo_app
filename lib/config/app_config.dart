@@ -5,7 +5,7 @@ class AppConfig {
   static const bool showMockData = false; // 设置为true使用mock数据，false使用真实数据
   
   // 人脸推送过滤配置
-  static const int personFilterTimeWindow = 100; // 同一个人100ms内的过滤窗口（测试用）
+  static const int personFilterTimeWindow = 120000; // 同一个人2min内的过滤窗口（测试用）
   static const int knownPersonDisplayTime = 3000; // 已知人员显示时间（毫秒）
   static const int strangerDisplayTime = 10000; // 陌生人显示时间（毫秒）
   static const int normalPersonDisplayTime = 5000; // 普通人员显示时间（毫秒）
