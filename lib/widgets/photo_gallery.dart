@@ -114,6 +114,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
             print('=== 调试信息 ===');
             print('推送数据数量: ${debugInfo['pushDataCount']}');
             print('过滤记录数量: ${debugInfo['filterRecordCount']}');
+            print('人员类型记录数量: ${debugInfo['personRecordTypesCount']}');
             print('显示定时器数量: ${debugInfo['displayTimersCount']}');
             print('是否运行中: ${debugInfo['isRunning']}');
             print('当前用户ID: ${debugInfo['currentUserId']}');
@@ -181,6 +182,10 @@ class _PhotoGalleryState extends State<PhotoGallery> {
             style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
           ),
           Text(
+            '人员类型记录数量: ${debugInfo['personRecordTypesCount']}',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+          ),
+          Text(
             '是否运行中: ${debugInfo['isRunning']}',
             style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
           ),
@@ -239,7 +244,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    '数据: ${debugInfo['pushDataCount']}, 过滤: ${debugInfo['filterRecordCount']}',
+                    '数据: ${debugInfo['pushDataCount']}, 过滤: ${debugInfo['filterRecordCount']}, 类型: ${debugInfo['personRecordTypesCount']}',
                   ),
                   duration: Duration(seconds: 2),
                 ),
@@ -385,19 +390,19 @@ class FaceCardWithDynamicColor extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 8),
 
                 // TODO：准删除
-                child: Text(pushData.objectId),
+                // child: Text(pushData.objectId),
                 // TODO：注释不允许删除
-                // child: Text(
-                //   name,
-                //   textAlign: TextAlign.center,
-                //   style: TextStyle(
-                //     color: Colors.black,
-                //     fontSize: MediaQuery.of(context).size.width / 40,
-                //     fontWeight: FontWeight.w300,
-                //   ),
-                //   maxLines: 1,
-                //   overflow: TextOverflow.ellipsis,
-                // ),
+                child: Text(
+                  name,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: MediaQuery.of(context).size.width / 40,
+                    fontWeight: FontWeight.w300,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
