@@ -7,7 +7,7 @@ final Logger _logger = Logger('AppConfig');
 
 class AppConfig {
   static final theme = Colors.red[500];
-  static bool isDev = true;
+  static bool isDev = false;
   static final Map<String, dynamic> _default = {
     'apiPort': '8080',
     'apiUrl': 'http://192.168.3.169',
