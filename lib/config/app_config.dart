@@ -7,7 +7,7 @@ final Logger _logger = Logger('AppConfig');
 
 class AppConfig {
   static final theme = Colors.red[500];
-  static bool isDev = false;
+  static bool isDev = true;
   static final Map<String, dynamic> _default = {
     'apiPort': '8080',
     'apiUrl': 'http://192.168.3.169',
@@ -46,7 +46,7 @@ class AppConfig {
 
   // 展示数量限制配置
   static int normalPersonMaxDisplayCount = 5; // 白名单人员最大展示数量
-  static int strangerMaxDisplayCount = 10; // 陌生人最大展示数量
+  static int strangerMaxDisplayCount = 5; // 陌生人最大展示数量
 
   // 服务器地址
   static String apiUrl = 'http://192.168.3.169';

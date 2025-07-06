@@ -301,41 +301,105 @@ class StableGridView extends StatefulWidget {
   State<StableGridView> createState() => _StableGridViewState();
 }
 
-class _StableGridViewState extends State<StableGridView> {
-  final Map<String, Widget> _stableCards = {};
-  final List<String> _currentOrder = [];
+class _StableGridViewState extends State<StableGridView> with TickerProviderStateMixin {
+  // 当前显示的数据（包括正在动画的）
+  final List<PushData> _displayData = [];
+  // 动画控制器映射
+  final Map<String, AnimationController> _animationControllers = {};
+  // 动画状态映射
+  final Map<String, bool> _isAnimating = {};
 
   @override
   void initState() {
     super.initState();
-    _updateCards();
+    _updateData();
   }
 
   @override
   void didUpdateWidget(StableGridView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _updateCards();
+    _updateData();
   }
 
-  void _updateCards() {
-    final newOrder = widget.dataList.map((data) => data.objectId).toList();
+  void _updateData() {
+    final currentIds = _displayData.map((data) => data.objectId).toList();
+    final newIds = widget.dataList.map((data) => data.objectId).toList();
     
-    // 添加新卡片
-    for (final data in widget.dataList) {
-      final objectId = data.objectId;
-      if (!_stableCards.containsKey(objectId)) {
-        _stableCards[objectId] = FaceCard(pushData: data);
+    // 检测新数据
+    final newData = widget.dataList.where((data) => !currentIds.contains(data.objectId)).toList();
+    
+    // 检测要移除的数据
+    final toRemoveIds = currentIds.where((id) => !newIds.contains(id)).toList();
+    
+    print('=== 数据更新 ===');
+    print('当前显示: $currentIds');
+    print('新数据: ${newData.map((e) => e.objectId).toList()}');
+    print('要移除: $toRemoveIds');
+    
+    // 处理新数据：直接添加并创建进入动画
+    for (final data in newData) {
+      _displayData.add(data);
+      // 确保只对没有在动画中的数据创建进入动画
+      if (!_isAnimating.containsKey(data.objectId) || !_isAnimating[data.objectId]!) {
+        _createEnterAnimation(data.objectId);
       }
     }
     
-    // 移除不存在的卡片
-    final toRemove = _stableCards.keys.where((key) => !newOrder.contains(key)).toList();
-    for (final key in toRemove) {
-      _stableCards.remove(key);
+    // 处理要移除的数据：先创建退出动画
+    for (final objectId in toRemoveIds) {
+      // 确保只对没有在动画中的数据创建退出动画
+      if (!_isAnimating.containsKey(objectId) || !_isAnimating[objectId]!) {
+        _createExitAnimation(objectId);
+      }
     }
     
-    _currentOrder.clear();
-    _currentOrder.addAll(newOrder);
+    setState(() {});
+  }
+  
+  void _createEnterAnimation(String objectId) {
+    print('创建进入动画: $objectId');
+    
+    final controller = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    
+    _animationControllers[objectId] = controller;
+    _isAnimating[objectId] = true;
+    
+    // 启动进入动画
+    controller.forward().then((_) {
+      _isAnimating[objectId] = false;
+      _animationControllers.remove(objectId);
+      print('进入动画完成: $objectId');
+      setState(() {});
+    });
+    
+    setState(() {});
+  }
+  
+  void _createExitAnimation(String objectId) {
+    print('创建退出动画: $objectId');
+    
+    final controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    _animationControllers[objectId] = controller;
+    _isAnimating[objectId] = true;
+    
+    // 启动退出动画
+    controller.forward().then((_) {
+      print('退出动画完成: $objectId，开始移除数据');
+      // 动画完成后移除数据
+      _displayData.removeWhere((data) => data.objectId == objectId);
+      _animationControllers.remove(objectId);
+      _isAnimating.remove(objectId);
+      setState(() {});
+    });
+    
+    setState(() {});
   }
 
   @override
@@ -343,24 +407,90 @@ class _StableGridViewState extends State<StableGridView> {
     return GridView.builder(
       padding: EdgeInsets.zero,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 5, // 每行5个
-        childAspectRatio: 0.7, // 宽高比
-        crossAxisSpacing: 8, // 水平间距
-        mainAxisSpacing: 8, // 垂直间距
+        crossAxisCount: 5,
+        childAspectRatio: 0.7,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
       ),
-      itemCount: widget.dataList.length,
+      itemCount: _displayData.length,
       itemBuilder: (context, index) {
-        final data = widget.dataList[index];
+        final data = _displayData[index];
         final objectId = data.objectId;
+        final isAnimating = _isAnimating[objectId] ?? false;
+        final controller = _animationControllers[objectId];
         
-        // 使用稳定的卡片实例，避免重新构建
-        return _stableCards[objectId] ?? FaceCard(pushData: data);
+        if (isAnimating && controller != null) {
+          // 创建动画卡片
+          // 判断是否为进入动画：检查当前数据是否在新的数据列表中
+          final isEntering = widget.dataList.any((d) => d.objectId == objectId);
+          return AnimatedFaceCard(
+            pushData: data,
+            animationController: controller,
+            isEntering: isEntering,
+          );
+        } else {
+          // 创建普通卡片
+          return FaceCard(pushData: data);
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _animationControllers.values) {
+      controller.dispose();
+    }
+    _animationControllers.clear();
+    super.dispose();
+  }
+}
+
+class AnimatedFaceCard extends StatelessWidget {
+  final PushData pushData;
+  final AnimationController animationController;
+  final bool isEntering;
+
+  const AnimatedFaceCard({
+    super.key,
+    required this.pushData,
+    required this.animationController,
+    required this.isEntering,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animationController,
+      builder: (context, child) {
+        double slideOffset;
+        double opacity;
+        
+                 if (isEntering) {
+           // 进入动画：从右侧滑入 + 淡入
+           // 从右侧30%位置开始，滑动到原位置(0)
+           slideOffset = (1.0 - animationController.value) * 0.3; // 从右侧30%位置滑入到原位置
+           opacity = animationController.value; // 从0到1，逐渐变不透明
+         } else {
+           // 退出动画：向左滑出 + 淡出
+           slideOffset = -animationController.value * 0.3; // 向左滑出30%
+           opacity = 1.0 - animationController.value; // 从1到0，逐渐变透明
+         }
+        
+        return Transform.translate(
+          offset: Offset(
+            slideOffset * MediaQuery.of(context).size.width,
+            0,
+          ),
+          child: Opacity(
+            opacity: opacity,
+            child: FaceCard(pushData: pushData),
+          ),
+        );
       },
     );
   }
 }
-
-
 
 class FaceCard extends StatelessWidget {
   final PushData pushData;
