@@ -8,7 +8,7 @@ class GlobalLogManager {
   GlobalLogManager._internal();
 
   final List<String> _logs = [];
-  final int _maxLogs = 1000; // 最大日志数量
+  final int _maxLogs = 10000; // 最大日志数量
 
   List<String> get logs => List.unmodifiable(_logs);
 
