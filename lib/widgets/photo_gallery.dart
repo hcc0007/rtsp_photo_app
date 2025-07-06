@@ -383,17 +383,21 @@ class FaceCardWithDynamicColor extends StatelessWidget {
                   color: Colors.white,
                 ),
                 padding: EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  name,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: MediaQuery.of(context).size.width / 40,
-                    fontWeight: FontWeight.w300,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+
+                // TODO：准删除
+                child: Text(pushData.objectId),
+                // TODO：注释不允许删除
+                // child: Text(
+                //   name,
+                //   textAlign: TextAlign.center,
+                //   style: TextStyle(
+                //     color: Colors.black,
+                //     fontSize: MediaQuery.of(context).size.width / 40,
+                //     fontWeight: FontWeight.w300,
+                //   ),
+                //   maxLines: 1,
+                //   overflow: TextOverflow.ellipsis,
+                // ),
               ),
             ],
           ),

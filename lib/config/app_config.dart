@@ -211,6 +211,7 @@ class AppConfig {
     strangerFilterTimeWindow = await getStrangerFilterTimeWindow();
     normalPersonFilterTimeWindow = await getNormalPersonFilterTimeWindow();
     normalPersonMaxDisplayCount = await getNormalPersonMaxDisplayCount();
+    strangerMaxDisplayCount = await getStrangerMaxDisplayCount();
     // 同步 userName、password、token
     username = await getUserName();
     password = await getPassword();
@@ -438,7 +439,7 @@ class AppConfig {
       return value;
     } catch (e) {
       _logger.warning('获取陌生人最大展示数量失败，使用默认值', e);
-      return strangerMaxDisplayCount;
+      return _default['strangerMaxDisplayCount'];
     }
   }
 
@@ -447,6 +448,7 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyServerUrl, value);
+      apiUrl = value;
       _logger.info('设置服务器地址: $value');
     } catch (e) {
       _logger.severe('设置服务器地址失败', e);
@@ -459,6 +461,7 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyServerPort, value);
+      apiPort = value;
       _logger.info('设置服务器端口: $value');
     } catch (e) {
       _logger.severe('设置服务器端口失败', e);
@@ -471,6 +474,7 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyRtspUrl, value);
+      defaultRtspUrl = value;
       _logger.info('设置RTSP地址: $value');
     } catch (e) {
       _logger.severe('设置RTSP地址失败', e);
@@ -483,6 +487,7 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_keyStrangerDisplayTime, value);
+      strangerDisplayTime = value;
       _logger.info('设置陌生人显示时间: ${value}ms');
     } catch (e) {
       _logger.severe('设置陌生人显示时间失败', e);
@@ -495,6 +500,7 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_keyNormalPersonDisplayTime, value);
+      normalPersonDisplayTime = value;
       _logger.info('设置白名单人员显示时间: ${value}ms');
     } catch (e) {
       _logger.severe('设置白名单人员显示时间失败', e);
@@ -507,6 +513,7 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_keyStrangerFilterTimeWindow, value);
+      strangerFilterTimeWindow = value;
       _logger.info('设置陌生人过滤时间窗口: ${value}ms');
     } catch (e) {
       _logger.severe('设置陌生人过滤时间窗口失败', e);
@@ -519,6 +526,7 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_keyNormalPersonFilterTimeWindow, value);
+      normalPersonFilterTimeWindow = value;
       _logger.info('设置白名单人员过滤时间窗口: ${value}ms');
     } catch (e) {
       _logger.severe('设置白名单人员过滤时间窗口失败', e);
@@ -531,6 +539,7 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_keyNormalPersonMaxDisplayCount, value);
+      normalPersonMaxDisplayCount = value;
       _logger.info('设置白名单人员最大展示数量: $value');
     } catch (e) {
       _logger.severe('设置白名单人员最大展示数量失败', e);
@@ -543,6 +552,7 @@ class AppConfig {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_keyStrangerMaxDisplayCount, value);
+      strangerMaxDisplayCount = value;
       _logger.info('设置陌生人最大展示数量: $value');
     } catch (e) {
       _logger.severe('设置陌生人最大展示数量失败', e);

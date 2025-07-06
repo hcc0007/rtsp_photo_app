@@ -96,6 +96,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // 重新初始化AppConfig以使用新的配置
     try {
       await AppConfig.initialize();
+      // 更新界面显示的配置值
+      setState(() {
+        _loadSettings();
+      });
     } catch (e) {
       print('重新初始化AppConfig失败: $e');
     }
