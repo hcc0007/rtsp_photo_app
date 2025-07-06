@@ -302,6 +302,10 @@ class _StableGridViewState extends State<StableGridView>
   final Map<String, AnimationController?> _animationControllers = {};
   // 动画状态映射
   final Map<String, bool> _isAnimating = {};
+  // 等待插入的队列
+  final List<PushData> _pendingData = [];
+  // 最大显示条数（5行 x 5列 = 25个）
+  static const int maxDisplayCount = 5;
 
   @override
   void initState() {
@@ -331,16 +335,7 @@ class _StableGridViewState extends State<StableGridView>
     print('当前显示: $currentIds');
     print('新数据: ${newData.map((e) => e.objectId).toList()}');
     print('要移除: $toRemoveIds');
-
-    // 处理新数据：直接添加并创建进入动画
-    for (final data in newData) {
-      _displayData.add(data);
-      // 确保只对没有在动画中的数据创建进入动画
-      if (!_isAnimating.containsKey(data.objectId) ||
-          !_isAnimating[data.objectId]!) {
-        _createEnterAnimation(data.objectId);
-      }
-    }
+    print('等待队列: ${_pendingData.map((e) => e.objectId).toList()}');
 
     // 处理要移除的数据：先创建退出动画
     for (final objectId in toRemoveIds) {
@@ -350,7 +345,76 @@ class _StableGridViewState extends State<StableGridView>
       }
     }
 
+    // 如果有数据要移除，为所有其他数据创建向左移动动画
+    if (toRemoveIds.isNotEmpty) {
+      for (final data in _displayData) {
+        final objectId = data.objectId;
+        // 不为要移除的数据创建移动动画
+        if (!toRemoveIds.contains(objectId) && 
+            (!_isAnimating.containsKey(objectId) || !_isAnimating[objectId]!)) {
+          _createShiftAnimation(objectId);
+        }
+      }
+    }
+
+    // 处理新数据：检查是否可以插入
+    for (final data in newData) {
+      if (_displayData.length < maxDisplayCount) {
+        // 可以直接插入
+        _displayData.add(data);
+        if (!_isAnimating.containsKey(data.objectId) ||
+            !_isAnimating[data.objectId]!) {
+          _createEnterAnimation(data.objectId);
+        }
+      } else {
+        // 添加到等待队列
+        if (!_pendingData.any((d) => d.objectId == data.objectId)) {
+          _pendingData.add(data);
+          print('数据 ${data.objectId} 添加到等待队列');
+        }
+      }
+    }
+
     setState(() {});
+  }
+
+  void _createShiftAnimation(String objectId) {
+    print('创建向左移动动画: $objectId');
+
+    final controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _animationControllers[objectId] = controller;
+    _isAnimating[objectId] = true;
+
+    // 启动向左移动动画
+    controller.forward().then((_) {
+      // 动画完成后，清理控制器
+      if (mounted) {
+        _isAnimating[objectId] = false;
+        _animationControllers[objectId] = null;
+        print('向左移动动画完成: $objectId');
+        setState(() {});
+      }
+    });
+
+    setState(() {});
+  }
+
+  void _processPendingData() {
+    // 检查等待队列，如果有数据且当前显示数量小于最大数量，则插入
+    while (_pendingData.isNotEmpty && _displayData.length < maxDisplayCount) {
+      final data = _pendingData.removeAt(0);
+      _displayData.add(data);
+      print('从等待队列插入数据: ${data.objectId}');
+      
+      if (!_isAnimating.containsKey(data.objectId) ||
+          !_isAnimating[data.objectId]!) {
+        _createEnterAnimation(data.objectId);
+      }
+    }
   }
 
   void _createEnterAnimation(String objectId) {
@@ -395,6 +459,10 @@ class _StableGridViewState extends State<StableGridView>
       _displayData.removeWhere((data) => data.objectId == objectId);
       _animationControllers.remove(objectId);
       _isAnimating.remove(objectId);
+      
+      // 检查等待队列，如果有数据且当前显示数量小于最大数量，则插入
+      _processPendingData();
+      
       setState(() {});
     });
 
@@ -469,6 +537,10 @@ class AnimatedFaceCard extends StatelessWidget {
               ? value /
                     0.6 // 前60%的时间完成透明度动画
               : 1.0; // 之后保持不透明
+        } else if (animationController != null && animationController!.value > 0) {
+          // 向左移动动画：向左移动一个网格位置
+          slideOffset = -(animationController!.value) * 0.2; // 向左移动20%的屏幕宽度
+          opacity = 1.0; // 保持不透明
         } else {
           // 退出动画：向左滑出 + 淡出
           slideOffset = -(animationController?.value ?? 0.0) * 0.3; // 向左滑出30%
