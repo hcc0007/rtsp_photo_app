@@ -35,14 +35,14 @@ class AppConfig {
 
   // 人脸推送过滤配置
   static int strangerDisplayTime = 10000; // 陌生人显示时间（毫秒）
-  static int normalPersonDisplayTime = 5000; // 普通人员显示时间（毫秒）
+  static int normalPersonDisplayTime = 5000; // 白名单人员显示时间（毫秒）
 
   // 根据人员类型的过滤时间窗口配置
   static int strangerFilterTimeWindow = 30000; // 陌生人过滤时间窗口（毫秒）
-  static int normalPersonFilterTimeWindow = 45000; // 普通人员过滤时间窗口（毫秒）
+  static int normalPersonFilterTimeWindow = 45000; // 白名单人员过滤时间窗口（毫秒）
 
   // 展示数量限制配置
-  static int normalPersonMaxDisplayCount = 5; // 普通人员最大展示数量
+  static int normalPersonMaxDisplayCount = 5; // 白名单人员最大展示数量
   static int strangerMaxDisplayCount = 10; // 陌生人最大展示数量
 
   // 服务器地址
@@ -242,7 +242,7 @@ class AppConfig {
     _logger.info('服务器端口: ${await getServerPort()}');
     _logger.info('RTSP地址: ${await getRtspUrl()}');
     _logger.info('陌生人显示时间: ${await getStrangerDisplayTime()}ms');
-    _logger.info('普通人员显示时间: ${await getNormalPersonDisplayTime()}ms');
+    _logger.info('白名单人员显示时间: ${await getNormalPersonDisplayTime()}ms');
   }
 
   // 重置所有配置为默认值
@@ -376,10 +376,10 @@ class AppConfig {
       final value =
           prefs.getInt(_keyNormalPersonDisplayTime) ??
           _default['normalPersonDisplayTime'];
-      _logger.fine('获取普通人员显示时间: ${value}ms');
+      _logger.fine('获取白名单人员显示时间: ${value}ms');
       return value;
     } catch (e) {
-      _logger.warning('获取普通人员显示时间失败，使用默认值', e);
+      _logger.warning('获取白名单人员显示时间失败，使用默认值', e);
       return _default['normalPersonDisplayTime'];
     }
   }
@@ -405,10 +405,10 @@ class AppConfig {
       final value =
           prefs.getInt(_keyNormalPersonFilterTimeWindow) ??
           _default['normalPersonFilterTimeWindow'];
-      _logger.fine('获取普通人员过滤时间窗口: ${value}ms');
+      _logger.fine('获取白名单人员过滤时间窗口: ${value}ms');
       return value;
     } catch (e) {
-      _logger.warning('获取普通人员过滤时间窗口失败，使用默认值', e);
+      _logger.warning('获取白名单人员过滤时间窗口失败，使用默认值', e);
       return _default['normalPersonFilterTimeWindow'];
     }
   }
@@ -420,10 +420,10 @@ class AppConfig {
       final value =
           prefs.getInt(_keyNormalPersonMaxDisplayCount) ??
           _default['normalPersonMaxDisplayCount'];
-      _logger.fine('获取普通人员最大展示数量: $value');
+      _logger.fine('获取白名单人员最大展示数量: $value');
       return value;
     } catch (e) {
-      _logger.warning('获取普通人员最大展示数量失败，使用默认值', e);
+      _logger.warning('获取白名单人员最大展示数量失败，使用默认值', e);
       return _default['normalPersonMaxDisplayCount'];
     }
   }
@@ -490,14 +490,14 @@ class AppConfig {
     }
   }
 
-  // 设置普通人员显示时间
+  // 设置白名单人员显示时间
   static Future<void> setNormalPersonDisplayTime(int value) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_keyNormalPersonDisplayTime, value);
-      _logger.info('设置普通人员显示时间: ${value}ms');
+      _logger.info('设置白名单人员显示时间: ${value}ms');
     } catch (e) {
-      _logger.severe('设置普通人员显示时间失败', e);
+      _logger.severe('设置白名单人员显示时间失败', e);
       rethrow;
     }
   }
@@ -514,26 +514,26 @@ class AppConfig {
     }
   }
 
-  // 设置普通人员过滤时间窗口
+  // 设置白名单人员过滤时间窗口
   static Future<void> setNormalPersonFilterTimeWindow(int value) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_keyNormalPersonFilterTimeWindow, value);
-      _logger.info('设置普通人员过滤时间窗口: ${value}ms');
+      _logger.info('设置白名单人员过滤时间窗口: ${value}ms');
     } catch (e) {
-      _logger.severe('设置普通人员过滤时间窗口失败', e);
+      _logger.severe('设置白名单人员过滤时间窗口失败', e);
       rethrow;
     }
   }
 
-  // 设置普通人员最大展示数量
+  // 设置白名单人员最大展示数量
   static Future<void> setNormalPersonMaxDisplayCount(int value) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_keyNormalPersonMaxDisplayCount, value);
-      _logger.info('设置普通人员最大展示数量: $value');
+      _logger.info('设置白名单人员最大展示数量: $value');
     } catch (e) {
-      _logger.severe('设置普通人员最大展示数量失败', e);
+      _logger.severe('设置白名单人员最大展示数量失败', e);
       rethrow;
     }
   }

@@ -157,7 +157,7 @@ class PersonItem extends StatelessWidget {
       case 'portrait_stranger':
         return Colors.red.withValues(alpha: 0.3); // 陌生人 - 淡红色背景
       case 'portrait_normal':
-        return Colors.green.withValues(alpha: 0.3); // 已知人员 - 淡绿色背景
+        return Colors.green.withValues(alpha: 0.3); // 白名单人员 - 淡绿色背景
       default:
         return Colors.orange.withValues(alpha: 0.3); // 其他状态 - 淡橙色背景
     }
@@ -169,7 +169,7 @@ class PersonItem extends StatelessWidget {
       case 'portrait_stranger':
         return Colors.red; // 陌生人
       case 'portrait_normal':
-        return Colors.green; // 已知人员
+        return Colors.green; // 白名单人员
       default:
         return Colors.orange; // 其他状态
     }

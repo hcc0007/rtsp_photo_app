@@ -307,7 +307,7 @@ class PushProvider with ChangeNotifier {
 
     print('开始清理过期过滤记录...');
     print('陌生人过滤时间窗口: ${strangerFilterTime}ms');
-    print('普通人员过滤时间窗口: ${normalFilterTime}ms');
+    print('白名单人员过滤时间窗口: ${normalFilterTime}ms');
 
     _lastPersonTime.forEach((personId, lastTime) {
       final timeDiff = currentTime - lastTime;

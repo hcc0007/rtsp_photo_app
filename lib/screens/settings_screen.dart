@@ -252,7 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: const TextStyle(color: Colors.black),
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: '已知人员显示时间（毫秒）',
+                labelText: '白名单人员显示时间（毫秒）',
                 labelStyle: const TextStyle(color: Colors.grey),
                 hintText: '8080',
                 hintStyle: const TextStyle(color: Colors.grey),
@@ -330,7 +330,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: const TextStyle(color: Colors.black),
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: '普通人员过滤时间（毫秒）',
+                labelText: '白名单人员过滤时间（毫秒）',
                 labelStyle: const TextStyle(color: Colors.grey),
                 hintText: '120000',
                 hintStyle: const TextStyle(color: Colors.grey),
@@ -362,7 +362,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: const TextStyle(color: Colors.black),
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: '已知人员最大展示数量',
+                labelText: '白名单人员最大展示数量',
                 labelStyle: const TextStyle(color: Colors.grey),
                 hintText: '10',
                 hintStyle: const TextStyle(color: Colors.grey),
