@@ -25,14 +25,14 @@ class PhotoGallery extends StatefulWidget {
 class _PhotoGalleryState extends State<PhotoGallery> {
   // 推送数据流订阅
   StreamSubscription<Map<String, dynamic>>? _pushDataSubscription;
-  
+
   // 记录上一次的数据，用于精确检测变化
   List<String> _lastDataIds = [];
 
   @override
   void initState() {
     super.initState();
-    
+
     // 监听推送数据流
     _pushDataSubscription = PushServerService.pushDataStream.listen((newData) {
       final ts = DateTime.now().millisecondsSinceEpoch.toString();
@@ -103,7 +103,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
     return Consumer<PushProvider>(
       builder: (context, provider, child) {
         final pushDataList = provider.pushData;
-        
+
         // 检测数据变化并触发动画
         _handleDataChange(pushDataList);
 
@@ -148,13 +148,11 @@ class _PhotoGalleryState extends State<PhotoGallery> {
       },
     );
   }
-  
+
   void _handleDataChange(List<PushData> currentData) {
     final currentIds = currentData.map((data) => data.objectId).toList();
     _lastDataIds = List.from(currentIds);
   }
-  
-
 
   Widget _buildDebugEmptyState(PushProvider provider) {
     final debugInfo = provider.getDebugInfo();
@@ -283,29 +281,25 @@ class _PhotoGalleryState extends State<PhotoGallery> {
   }
 
   Widget _buildPersonGrid(List<PushData> dataList) {
-    return StableGridView(
-      dataList: dataList,
-    );
+    return StableGridView(dataList: dataList);
   }
 }
 
 class StableGridView extends StatefulWidget {
   final List<PushData> dataList;
 
-  const StableGridView({
-    super.key,
-    required this.dataList,
-  });
+  const StableGridView({super.key, required this.dataList});
 
   @override
   State<StableGridView> createState() => _StableGridViewState();
 }
 
-class _StableGridViewState extends State<StableGridView> with TickerProviderStateMixin {
+class _StableGridViewState extends State<StableGridView>
+    with TickerProviderStateMixin {
   // 当前显示的数据（包括正在动画的）
   final List<PushData> _displayData = [];
   // 动画控制器映射
-  final Map<String, AnimationController> _animationControllers = {};
+  final Map<String, AnimationController?> _animationControllers = {};
   // 动画状态映射
   final Map<String, bool> _isAnimating = {};
 
@@ -324,27 +318,30 @@ class _StableGridViewState extends State<StableGridView> with TickerProviderStat
   void _updateData() {
     final currentIds = _displayData.map((data) => data.objectId).toList();
     final newIds = widget.dataList.map((data) => data.objectId).toList();
-    
+
     // 检测新数据
-    final newData = widget.dataList.where((data) => !currentIds.contains(data.objectId)).toList();
-    
+    final newData = widget.dataList
+        .where((data) => !currentIds.contains(data.objectId))
+        .toList();
+
     // 检测要移除的数据
     final toRemoveIds = currentIds.where((id) => !newIds.contains(id)).toList();
-    
+
     print('=== 数据更新 ===');
     print('当前显示: $currentIds');
     print('新数据: ${newData.map((e) => e.objectId).toList()}');
     print('要移除: $toRemoveIds');
-    
+
     // 处理新数据：直接添加并创建进入动画
     for (final data in newData) {
       _displayData.add(data);
       // 确保只对没有在动画中的数据创建进入动画
-      if (!_isAnimating.containsKey(data.objectId) || !_isAnimating[data.objectId]!) {
+      if (!_isAnimating.containsKey(data.objectId) ||
+          !_isAnimating[data.objectId]!) {
         _createEnterAnimation(data.objectId);
       }
     }
-    
+
     // 处理要移除的数据：先创建退出动画
     for (final objectId in toRemoveIds) {
       // 确保只对没有在动画中的数据创建退出动画
@@ -352,43 +349,45 @@ class _StableGridViewState extends State<StableGridView> with TickerProviderStat
         _createExitAnimation(objectId);
       }
     }
-    
+
     setState(() {});
   }
-  
+
   void _createEnterAnimation(String objectId) {
     print('创建进入动画: $objectId');
-    
+
     final controller = AnimationController(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    
+
     _animationControllers[objectId] = controller;
     _isAnimating[objectId] = true;
-    
+
     // 启动进入动画
     controller.forward().then((_) {
-      _isAnimating[objectId] = false;
-      _animationControllers.remove(objectId);
-      print('进入动画完成: $objectId');
-      setState(() {});
+      // 动画完成后，保持控制器，不清理
+      if (mounted) {
+        _isAnimating[objectId] = false;
+        print('进入动画完成: $objectId');
+        setState(() {});
+      }
     });
-    
+
     setState(() {});
   }
-  
+
   void _createExitAnimation(String objectId) {
     print('创建退出动画: $objectId');
-    
+
     final controller = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _animationControllers[objectId] = controller;
     _isAnimating[objectId] = true;
-    
+
     // 启动退出动画
     controller.forward().then((_) {
       print('退出动画完成: $objectId，开始移除数据');
@@ -398,7 +397,7 @@ class _StableGridViewState extends State<StableGridView> with TickerProviderStat
       _isAnimating.remove(objectId);
       setState(() {});
     });
-    
+
     setState(() {});
   }
 
@@ -416,22 +415,14 @@ class _StableGridViewState extends State<StableGridView> with TickerProviderStat
       itemBuilder: (context, index) {
         final data = _displayData[index];
         final objectId = data.objectId;
-        final isAnimating = _isAnimating[objectId] ?? false;
         final controller = _animationControllers[objectId];
-        
-        if (isAnimating && controller != null) {
-          // 创建动画卡片
-          // 判断是否为进入动画：检查当前数据是否在新的数据列表中
-          final isEntering = widget.dataList.any((d) => d.objectId == objectId);
-          return AnimatedFaceCard(
-            pushData: data,
-            animationController: controller,
-            isEntering: isEntering,
-          );
-        } else {
-          // 创建普通卡片
-          return FaceCard(pushData: data);
-        }
+        final isEntering = widget.dataList.any((d) => d.objectId == objectId);
+
+        return AnimatedFaceCard(
+          pushData: data,
+          animationController: controller,
+          isEntering: isEntering,
+        );
       },
     );
   }
@@ -439,7 +430,7 @@ class _StableGridViewState extends State<StableGridView> with TickerProviderStat
   @override
   void dispose() {
     for (final controller in _animationControllers.values) {
-      controller.dispose();
+      controller?.dispose();
     }
     _animationControllers.clear();
     super.dispose();
@@ -448,40 +439,44 @@ class _StableGridViewState extends State<StableGridView> with TickerProviderStat
 
 class AnimatedFaceCard extends StatelessWidget {
   final PushData pushData;
-  final AnimationController animationController;
+  final AnimationController? animationController;
   final bool isEntering;
 
   const AnimatedFaceCard({
     super.key,
     required this.pushData,
-    required this.animationController,
+    this.animationController,
     required this.isEntering,
   });
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: animationController,
+      animation: animationController ?? const AlwaysStoppedAnimation(1.0),
       builder: (context, child) {
         double slideOffset;
         double opacity;
-        
-                 if (isEntering) {
-           // 进入动画：从右侧滑入 + 淡入
-           // 从右侧30%位置开始，滑动到原位置(0)
-           slideOffset = (1.0 - animationController.value) * 0.3; // 从右侧30%位置滑入到原位置
-           opacity = animationController.value; // 从0到1，逐渐变不透明
-         } else {
-           // 退出动画：向左滑出 + 淡出
-           slideOffset = -animationController.value * 0.3; // 向左滑出30%
-           opacity = 1.0 - animationController.value; // 从1到0，逐渐变透明
-         }
-        
+
+        if (isEntering) {
+          // 进入动画：从右侧滑入 + 淡入
+          // 从右侧30%位置开始，滑动到原位置(0)
+          slideOffset =
+              (1.0 - (animationController?.value ?? 1.0)) *
+              0.3; // 从右侧30%位置滑入到原位置
+          // 透明度在300ms内完成，500ms总时长，所以300/500=0.6
+          final value = animationController?.value ?? 1.0;
+          opacity = value < 0.6
+              ? value /
+                    0.6 // 前60%的时间完成透明度动画
+              : 1.0; // 之后保持不透明
+        } else {
+          // 退出动画：向左滑出 + 淡出
+          slideOffset = -(animationController?.value ?? 0.0) * 0.3; // 向左滑出30%
+          opacity = 1.0 - (animationController?.value ?? 0.0); // 从1到0，逐渐变透明
+        }
+
         return Transform.translate(
-          offset: Offset(
-            slideOffset * MediaQuery.of(context).size.width,
-            0,
-          ),
+          offset: Offset(slideOffset * MediaQuery.of(context).size.width, 0),
           child: Opacity(
             opacity: opacity,
             child: FaceCard(pushData: pushData),
@@ -589,21 +584,17 @@ class FaceCardWithDynamicColor extends StatelessWidget {
                   color: Colors.white,
                 ),
                 padding: EdgeInsets.symmetric(vertical: 8),
-
-                // TODO：准删除
-                child: Text(pushData.objectId),
-                // TODO：注释不允许删除
-                // child: Text(
-                //   name,
-                //   textAlign: TextAlign.center,
-                //   style: TextStyle(
-                //     color: Colors.black,
-                //     fontSize: MediaQuery.of(context).size.width / 40,
-                //     fontWeight: FontWeight.w300,
-                //   ),
-                //   maxLines: 1,
-                //   overflow: TextOverflow.ellipsis,
-                // ),
+                child: Text(
+                  name,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: MediaQuery.of(context).size.width / 40,
+                    fontWeight: FontWeight.w300,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
