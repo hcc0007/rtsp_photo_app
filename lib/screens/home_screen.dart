@@ -23,6 +23,11 @@ class _HomeScreenState extends State<HomeScreen> {
   late DateTime _now;
   late Timer _timer;
 
+  // 新增：WELCOME点击检测相关状态
+  int _welcomeClickCount = 0;
+  DateTime? _firstWelcomeClick;
+  Timer? _welcomeClickTimer;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _timer.cancel();
+    _welcomeClickTimer?.cancel();
     super.dispose();
   }
 
@@ -76,20 +82,24 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppConfig.theme,
       appBar: AppBar(
-        title: const Text(
-          'WELCOME',
-          style: TextStyle(
-            color: Colors.white,
-            letterSpacing: 8,
-            fontSize: 64,
-            fontWeight: FontWeight.w500,
+        title: GestureDetector(
+          onTap: _handleToggleShowActions,
+          child: const Text(
+            'WELCOME',
+            style: TextStyle(
+              color: Colors.white,
+              letterSpacing: 8,
+              fontSize: 64,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         backgroundColor: AppConfig.theme,
         toolbarHeight: 120,
         actionsPadding: EdgeInsets.only(right: 24),
         elevation: 0,
-        actions: _buildActionButtons(),
+        centerTitle: false,
+        actions: AppConfig.isDev ?  _buildActionButtons() : [],
       ),
       body: SafeArea(
         child: Stack(
@@ -490,6 +500,69 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: PhotoGallery.debugMode ? Colors.green : Colors.grey,
       ),
     );
+  }
+
+  void _handleToggleShowActions() {
+    final now = DateTime.now();
+    
+    // 如果是第一次点击，记录时间并启动定时器
+    if (_firstWelcomeClick == null) {
+      _firstWelcomeClick = now;
+      _welcomeClickCount = 1;
+      
+      // 启动20秒定时器
+      _welcomeClickTimer = Timer(Duration(seconds: 20), () {
+        if (mounted) {
+          setState(() {
+            _welcomeClickCount = 0;
+            _firstWelcomeClick = null;
+          });
+        }
+      });
+    } else {
+      // 检查是否在20秒内
+      final timeDiff = now.difference(_firstWelcomeClick!).inSeconds;
+      if (timeDiff <= 20) {
+        _welcomeClickCount++;
+        
+        // 如果达到20次点击，触发toggle
+        if (_welcomeClickCount >= 20) {
+          AppConfig.isDev = !AppConfig.isDev;
+          
+          // 显示提示信息
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppConfig.isDev ? '开发者模式已开启' : '开发者模式已关闭'),
+              backgroundColor: AppConfig.isDev ? Colors.green : Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          
+          // 重置计数器
+          _welcomeClickCount = 0;
+          _firstWelcomeClick = null;
+          _welcomeClickTimer?.cancel();
+          
+          // 强制重建界面以显示/隐藏开发者按钮
+          setState(() {});
+        }
+      } else {
+        // 超过20秒，重置计数器
+        _welcomeClickCount = 1;
+        _firstWelcomeClick = now;
+        
+        // 重新启动定时器
+        _welcomeClickTimer?.cancel();
+        _welcomeClickTimer = Timer(Duration(seconds: 20), () {
+          if (mounted) {
+            setState(() {
+              _welcomeClickCount = 0;
+              _firstWelcomeClick = null;
+            });
+          }
+        });
+      }
+    }
   }
 }
 
