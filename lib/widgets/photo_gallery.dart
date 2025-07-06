@@ -98,11 +98,11 @@ class _PhotoGalleryState extends State<PhotoGallery> {
   Widget _buildWrapper(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.red[900]!, Colors.red[800]!, Colors.red[700]!],
-        ),
+        // gradient: LinearGradient(
+        //   begin: Alignment.topCenter,
+        //   end: Alignment.bottomCenter,
+        //   colors: [Colors.red[900]!, Colors.red[800]!, Colors.red[700]!],
+        // ),
       ),
       child: Consumer<PushProvider>(
         builder: (context, provider, child) {
@@ -122,7 +122,9 @@ class _PhotoGalleryState extends State<PhotoGallery> {
           }
 
           if (pushDataList.isEmpty) {
-            return PhotoGallery.debugMode ? _buildDebugEmptyState(provider) : SizedBox();
+            return PhotoGallery.debugMode
+                ? _buildDebugEmptyState(provider)
+                : SizedBox();
           }
 
           return Container(
@@ -134,12 +136,12 @@ class _PhotoGalleryState extends State<PhotoGallery> {
                 if (PhotoGallery.debugMode) _buildDebugControls(provider),
 
                 // 白名单区域
-                SizedBox(height: 170, child: _buildWhiteList(pushDataList)),
+                Expanded(flex: 1, child: _buildWhiteList(pushDataList)),
 
                 const SizedBox(height: 8),
 
                 // 陌生人区域
-                SizedBox(height: 348, child: _buildStrangerList(pushDataList)),
+                Expanded(flex: 1, child: _buildStrangerList(pushDataList)),
               ],
             ),
           );
@@ -275,7 +277,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
       padding: EdgeInsets.zero,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 5, // 每行5个
-        childAspectRatio: 0.8, // 宽高比
+        childAspectRatio: 0.7, // 宽高比
         crossAxisSpacing: 8, // 水平间距
         mainAxisSpacing: 8, // 垂直间距
       ),
@@ -308,7 +310,9 @@ class FaceCardWithDynamicColor extends StatelessWidget {
     final recordType = pushData.recordType;
 
     // 添加调试日志
-    _logger.info('[DEBUG] FaceCard构建: objectId=${pushData.objectId}, imageUrl=$imageUrl, name=$name, recordType=$recordType');
+    _logger.info(
+      '[DEBUG] FaceCard构建: objectId=${pushData.objectId}, imageUrl=$imageUrl, name=$name, recordType=$recordType',
+    );
 
     return FutureBuilder<Color>(
       future: _getRecordTypeColor(recordType),
@@ -334,10 +338,10 @@ class FaceCardWithDynamicColor extends StatelessWidget {
             children: [
               // 头像区域
               Container(
-                margin: EdgeInsets.only(top: 10),
+                margin: EdgeInsets.only(top: 30),
                 // 网格布局样式（当前使用）
-                width: MediaQuery.of(context).size.width / 7,
-                height: MediaQuery.of(context).size.width / 7,
+                width: MediaQuery.of(context).size.width / 6,
+                height: MediaQuery.of(context).size.width / 6,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 5),
