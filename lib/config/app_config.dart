@@ -12,12 +12,11 @@ class AppConfig {
     'tokenRefreshInterval': 25 * 60 * 1000,
     'connectTimeout': 100000,
     'receiveTimeout': 100000,
-    'knownPersonDisplayTime': 3000,
     'strangerDisplayTime': 10000,
     'normalPersonDisplayTime': 5000,
-    'knownPersonFilterTimeWindow': 60000,
     'strangerFilterTimeWindow': 30000,
-    'knownPersonMaxDisplayCount': 5,
+    'normalPersonFilterTimeWindow': 45000,
+    'normalPersonMaxDisplayCount': 5,
     'strangerMaxDisplayCount': 10,
     'username': 'ops',
     'password': 'Test@001',
@@ -35,17 +34,15 @@ class AppConfig {
   static String company = '云南省委';
 
   // 人脸推送过滤配置
-  static int knownPersonDisplayTime = 3000; // 已知人员显示时间（毫秒）
   static int strangerDisplayTime = 10000; // 陌生人显示时间（毫秒）
   static int normalPersonDisplayTime = 5000; // 普通人员显示时间（毫秒）
 
-  // 新增：根据人员类型的过滤时间窗口配置
-  static int knownPersonFilterTimeWindow = 60000; // 白名单人员过滤时间窗口（毫秒）
+  // 根据人员类型的过滤时间窗口配置
   static int strangerFilterTimeWindow = 30000; // 陌生人过滤时间窗口（毫秒）
   static int normalPersonFilterTimeWindow = 45000; // 普通人员过滤时间窗口（毫秒）
 
-  // 新增：展示数量限制配置
-  static int knownPersonMaxDisplayCount = 5; // 白名单最大展示数量
+  // 展示数量限制配置
+  static int normalPersonMaxDisplayCount = 5; // 普通人员最大展示数量
   static int strangerMaxDisplayCount = 10; // 陌生人最大展示数量
 
   // 服务器地址
@@ -79,22 +76,19 @@ class AppConfig {
   static const String _keyServerPort = 'server_port';
   static const String _keyRtspUrl = 'rtsp_url';
   static const String _keyTokenRefreshInterval = 'token_refresh_interval';
-  static const String _keyKnownPersonDisplayTime = 'known_person_display_time';
   static const String _keyStrangerDisplayTime = 'stranger_display_time';
   static const String _keyNormalPersonDisplayTime =
       'normal_person_display_time';
 
-  // 新增：根据人员类型的过滤时间窗口配置键名
-  static const String _keyKnownPersonFilterTimeWindow =
-      'known_person_filter_time_window';
+  // 根据人员类型的过滤时间窗口配置键名
   static const String _keyStrangerFilterTimeWindow =
       'stranger_filter_time_window';
   static const String _keyNormalPersonFilterTimeWindow =
       'normal_person_filter_time_window';
 
-  // 新增：展示数量限制配置键名
-  static const String _keyKnownPersonMaxDisplayCount =
-      'known_person_max_display_count';
+  // 展示数量限制配置键名
+  static const String _keyNormalPersonMaxDisplayCount =
+      'normal_person_max_display_count';
   static const String _keyStrangerMaxDisplayCount =
       'stranger_max_display_count';
 
@@ -141,11 +135,6 @@ class AppConfig {
       );
       await _setDefaultIfNotExists(
         prefs,
-        _keyKnownPersonDisplayTime,
-        _default['knownPersonDisplayTime'],
-      );
-      await _setDefaultIfNotExists(
-        prefs,
         _keyStrangerDisplayTime,
         _default['strangerDisplayTime'],
       );
@@ -155,12 +144,7 @@ class AppConfig {
         _default['normalPersonDisplayTime'],
       );
 
-      // 新增：设置根据人员类型的过滤时间窗口默认值
-      await _setDefaultIfNotExists(
-        prefs,
-        _keyKnownPersonFilterTimeWindow,
-        _default['knownPersonFilterTimeWindow'],
-      );
+      // 设置根据人员类型的过滤时间窗口默认值
       await _setDefaultIfNotExists(
         prefs,
         _keyStrangerFilterTimeWindow,
@@ -172,11 +156,11 @@ class AppConfig {
         _default['normalPersonFilterTimeWindow'],
       );
 
-      // 新增：设置展示数量限制默认值
+      // 设置展示数量限制默认值
       await _setDefaultIfNotExists(
         prefs,
-        _keyKnownPersonMaxDisplayCount,
-        _default['knownPersonMaxDisplayCount'],
+        _keyNormalPersonMaxDisplayCount,
+        _default['normalPersonMaxDisplayCount'],
       );
       await _setDefaultIfNotExists(
         prefs,
@@ -222,16 +206,12 @@ class AppConfig {
     apiUrl = await getServerUrl();
     apiPort = await getServerPort();
     defaultRtspUrl = await getRtspUrl();
-    knownPersonDisplayTime = await getKnownPersonDisplayTime();
-    normalPersonDisplayTime = await getNormalPersonDisplayTime();
-    knownPersonDisplayTime = await getKnownPersonDisplayTime();
     strangerDisplayTime = await getStrangerDisplayTime();
     normalPersonDisplayTime = await getNormalPersonDisplayTime();
-    knownPersonFilterTimeWindow = await getKnownPersonFilterTimeWindow();
     strangerFilterTimeWindow = await getStrangerFilterTimeWindow();
     normalPersonFilterTimeWindow = await getNormalPersonFilterTimeWindow();
-    knownPersonMaxDisplayCount = await getKnownPersonMaxDisplayCount();
-    // 新增：同步 userName、password、token
+    normalPersonMaxDisplayCount = await getNormalPersonMaxDisplayCount();
+    // 同步 userName、password、token
     username = await getUserName();
     password = await getPassword();
     token = await getToken();
@@ -261,8 +241,8 @@ class AppConfig {
     _logger.info('服务器地址: ${await getServerUrl()}');
     _logger.info('服务器端口: ${await getServerPort()}');
     _logger.info('RTSP地址: ${await getRtspUrl()}');
-    _logger.info('已知人员显示时间: ${await getKnownPersonDisplayTime()}ms');
     _logger.info('陌生人显示时间: ${await getStrangerDisplayTime()}ms');
+    _logger.info('普通人员显示时间: ${await getNormalPersonDisplayTime()}ms');
   }
 
   // 重置所有配置为默认值
@@ -280,10 +260,6 @@ class AppConfig {
         _default['tokenRefreshInterval'],
       );
       await prefs.setInt(
-        _keyKnownPersonDisplayTime,
-        _default['knownPersonDisplayTime'],
-      );
-      await prefs.setInt(
         _keyStrangerDisplayTime,
         _default['strangerDisplayTime'],
       );
@@ -292,11 +268,7 @@ class AppConfig {
         _default['normalPersonDisplayTime'],
       );
 
-      // 新增：重置根据人员类型的过滤时间窗口配置
-      await prefs.setInt(
-        _keyKnownPersonFilterTimeWindow,
-        _default['knownPersonFilterTimeWindow'],
-      );
+      // 重置根据人员类型的过滤时间窗口配置
       await prefs.setInt(
         _keyStrangerFilterTimeWindow,
         _default['strangerFilterTimeWindow'],
@@ -306,10 +278,10 @@ class AppConfig {
         _default['normalPersonFilterTimeWindow'],
       );
 
-      // 新增：重置展示数量限制配置
+      // 重置展示数量限制配置
       await prefs.setInt(
-        _keyKnownPersonMaxDisplayCount,
-        _default['knownPersonMaxDisplayCount'],
+        _keyNormalPersonMaxDisplayCount,
+        _default['normalPersonMaxDisplayCount'],
       );
       await prefs.setInt(
         _keyStrangerMaxDisplayCount,
@@ -384,20 +356,6 @@ class AppConfig {
     }
   }
 
-  static Future<int> getKnownPersonDisplayTime() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final value =
-          prefs.getInt(_keyKnownPersonDisplayTime) ??
-          _default['knownPersonDisplayTime'];
-      _logger.fine('获取已知人员显示时间: ${value}ms');
-      return value;
-    } catch (e) {
-      _logger.warning('获取已知人员显示时间失败，使用默认值', e);
-      return _default['knownPersonDisplayTime'];
-    }
-  }
-
   static Future<int> getStrangerDisplayTime() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -426,21 +384,7 @@ class AppConfig {
     }
   }
 
-  // 新增：根据人员类型获取过滤时间窗口
-  static Future<int> getKnownPersonFilterTimeWindow() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final value =
-          prefs.getInt(_keyKnownPersonFilterTimeWindow) ??
-          _default['knownPersonFilterTimeWindow'];
-      _logger.fine('获取白名单人员过滤时间窗口: ${value}ms');
-      return value;
-    } catch (e) {
-      _logger.warning('获取白名单人员过滤时间窗口失败，使用默认值', e);
-      return _default['knownPersonFilterTimeWindow'];
-    }
-  }
-
+  // 根据人员类型获取过滤时间窗口
   static Future<int> getStrangerFilterTimeWindow() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -469,18 +413,18 @@ class AppConfig {
     }
   }
 
-  // 新增：获取展示数量限制
-  static Future<int> getKnownPersonMaxDisplayCount() async {
+  // 获取展示数量限制
+  static Future<int> getNormalPersonMaxDisplayCount() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final value =
-          prefs.getInt(_keyKnownPersonMaxDisplayCount) ??
-          _default['knownPersonMaxDisplayCount'];
-      _logger.fine('获取白名单最大展示数量: $value');
+          prefs.getInt(_keyNormalPersonMaxDisplayCount) ??
+          _default['normalPersonMaxDisplayCount'];
+      _logger.fine('获取普通人员最大展示数量: $value');
       return value;
     } catch (e) {
-      _logger.warning('获取白名单最大展示数量失败，使用默认值', e);
-      return _default['knownPersonMaxDisplayCount'];
+      _logger.warning('获取普通人员最大展示数量失败，使用默认值', e);
+      return _default['normalPersonMaxDisplayCount'];
     }
   }
 
@@ -497,8 +441,6 @@ class AppConfig {
       return strangerMaxDisplayCount;
     }
   }
-
-  // 新增：设置方法 - 直接操作SharedPreferences缓存
 
   // 设置服务器地址
   static Future<void> setServerUrl(String value) async {
@@ -536,18 +478,6 @@ class AppConfig {
     }
   }
 
-  // 设置已知人员显示时间
-  static Future<void> setKnownPersonDisplayTime(int value) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_keyKnownPersonDisplayTime, value);
-      _logger.info('设置已知人员显示时间: ${value}ms');
-    } catch (e) {
-      _logger.severe('设置已知人员显示时间失败', e);
-      rethrow;
-    }
-  }
-
   // 设置陌生人显示时间
   static Future<void> setStrangerDisplayTime(int value) async {
     try {
@@ -568,18 +498,6 @@ class AppConfig {
       _logger.info('设置普通人员显示时间: ${value}ms');
     } catch (e) {
       _logger.severe('设置普通人员显示时间失败', e);
-      rethrow;
-    }
-  }
-
-  // 设置已知人员过滤时间窗口
-  static Future<void> setKnownPersonFilterTimeWindow(int value) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_keyKnownPersonFilterTimeWindow, value);
-      _logger.info('设置已知人员过滤时间窗口: ${value}ms');
-    } catch (e) {
-      _logger.severe('设置已知人员过滤时间窗口失败', e);
       rethrow;
     }
   }
@@ -608,14 +526,14 @@ class AppConfig {
     }
   }
 
-  // 设置已知人员最大展示数量
-  static Future<void> setKnownPersonMaxDisplayCount(int value) async {
+  // 设置普通人员最大展示数量
+  static Future<void> setNormalPersonMaxDisplayCount(int value) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_keyKnownPersonMaxDisplayCount, value);
-      _logger.info('设置已知人员最大展示数量: $value');
+      await prefs.setInt(_keyNormalPersonMaxDisplayCount, value);
+      _logger.info('设置普通人员最大展示数量: $value');
     } catch (e) {
-      _logger.severe('设置已知人员最大展示数量失败', e);
+      _logger.severe('设置普通人员最大展示数量失败', e);
       rethrow;
     }
   }

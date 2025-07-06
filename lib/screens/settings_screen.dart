@@ -47,17 +47,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _serverUrlController.text = AppConfig.apiUrl;
       _serverPortController.text = AppConfig.apiPort;
       _rtspController.text = AppConfig.defaultRtspUrl;
-      _normalPersonDisplayController.text = AppConfig.knownPersonDisplayTime
+      _normalPersonDisplayController.text = AppConfig.normalPersonDisplayTime
           .toString();
       _strangerDisplayController.text = AppConfig.strangerDisplayTime
           .toString();
       _normalPersonFilterTimeController.text = AppConfig
-          .knownPersonFilterTimeWindow
+          .normalPersonFilterTimeWindow
           .toString();
       _strangerFilterTimeController.text = AppConfig.strangerFilterTimeWindow
           .toString();
       _normalPersonMaxDisplayController.text = AppConfig
-          .knownPersonMaxDisplayCount
+          .normalPersonMaxDisplayCount
           .toString();
       _strangerMaxDisplayController.text = AppConfig.strangerMaxDisplayCount
           .toString();
@@ -74,19 +74,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await AppConfig.setServerUrl(_serverUrlController.text);
     await AppConfig.setServerPort(_serverPortController.text);
     await AppConfig.setRtspUrl(_rtspController.text);
-    await AppConfig.setKnownPersonDisplayTime(
+    await AppConfig.setNormalPersonDisplayTime(
       int.parse(_normalPersonDisplayController.text),
     );
     await AppConfig.setStrangerDisplayTime(
       int.parse(_strangerDisplayController.text),
     );
-    await AppConfig.setKnownPersonFilterTimeWindow(
+    await AppConfig.setNormalPersonFilterTimeWindow(
       int.parse(_normalPersonFilterTimeController.text),
     );
     await AppConfig.setStrangerFilterTimeWindow(
       int.parse(_strangerFilterTimeController.text),
     );
-    await AppConfig.setKnownPersonMaxDisplayCount(
+    await AppConfig.setNormalPersonMaxDisplayCount(
       int.parse(_normalPersonMaxDisplayController.text),
     );
     await AppConfig.setStrangerMaxDisplayCount(

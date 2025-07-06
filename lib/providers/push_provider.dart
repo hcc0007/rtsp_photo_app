@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:logging/logging.dart';
 import '../services/api_client.dart';
 import 'auth_provider.dart';
 import '../config/app_config.dart';
 import '../models/push_data.dart';
+
+final Logger _logger = Logger('PushProvider');
 
 const String kRecordTypeStranger = 'portrait_stranger';
 const String kRecordTypeNormal = 'portrait_normal';
@@ -97,34 +100,34 @@ class PushProvider with ChangeNotifier {
       data.recordType,
     );
 
-    print(
-      '检查过滤: personId=$personId, recordType=${data.recordType}, 当前时间=$currentTime, 过滤窗口=${filterWindow}ms',
+    _logger.info(
+      '[${data.objectId}] 检查过滤🔍🔍🔍: personId=$personId, recordType=${data.recordType}, 当前时间=$currentTime, 过滤窗口=${filterWindow}ms',
     );
 
     // 检查是否在过滤时间窗口内
     if (_lastPersonTime.containsKey(personId)) {
       final lastTime = _lastPersonTime[personId]!;
       final timeDiff = currentTime - lastTime;
-      print('发现重复人员: personId=$personId, 上次时间=$lastTime, 时间差=${timeDiff}ms');
+      _logger.info('[${data.objectId}] 发现重复人员: personId=$personId, 上次时间=$lastTime, 时间差=${timeDiff}ms');
 
       if (timeDiff < filterWindow) {
-        print(
-          '过滤推送数据: personId=$personId, recordType=${data.recordType}, 时间差=${timeDiff}ms < ${filterWindow}ms',
+        _logger.info(
+          '[${data.objectId}] 过滤推送数据: personId=$personId, recordType=${data.recordType}, 时间差=${timeDiff}ms < ${filterWindow}ms',
         );
         return true; // 过滤掉
       } else {
-        print(
-          '时间已过期，允许推送: personId=$personId, recordType=${data.recordType}, 时间差=${timeDiff}ms >= ${filterWindow}ms',
+        _logger.info(
+          '[${data.objectId}] 时间已过期，允许推送: personId=$personId, recordType=${data.recordType}, 时间差=${timeDiff}ms >= ${filterWindow}ms',
         );
       }
     } else {
-      print('新人员，允许推送: personId=$personId, recordType=${data.recordType}');
+      _logger.info('[${data.objectId}] 新人员，允许推送: personId=$personId, recordType=${data.recordType}');
     }
 
     // 更新最后推送时间
     _lastPersonTime[personId] = currentTime;
-    print(
-      '更新最后推送时间: personId=$personId, recordType=${data.recordType}, 时间=$currentTime',
+    _logger.info(
+      '[${data.objectId}] 更新最后推送时间: personId=$personId, recordType=${data.recordType}, 时间=$currentTime',
     );
     return false;
   }
@@ -132,13 +135,12 @@ class PushProvider with ChangeNotifier {
   /// 根据人脸类型获取过滤时间窗口（异步热加载）
   Future<int> _getFilterTimeWindowByRecordType(String recordType) async {
     final strangerFilterTime = await AppConfig.getStrangerFilterTimeWindow();
-    final knownFilterTime = await AppConfig.getKnownPersonFilterTimeWindow();
     final normalFilterTime = await AppConfig.getNormalPersonFilterTimeWindow();
     switch (recordType) {
       case kRecordTypeStranger:
         return strangerFilterTime;
       case kRecordTypeNormal:
-        return knownFilterTime;
+        return normalFilterTime;
       default:
         return normalFilterTime;
     }
@@ -147,13 +149,12 @@ class PushProvider with ChangeNotifier {
   /// 根据人脸类型获取显示时间（异步热加载）
   Future<int> _getDisplayTime(PushData data) async {
     final strangerTime = await AppConfig.getStrangerDisplayTime();
-    final knownTime = await AppConfig.getKnownPersonDisplayTime();
     final normalTime = await AppConfig.getNormalPersonDisplayTime();
     switch (data.recordType) {
       case kRecordTypeStranger:
         return strangerTime;
       case kRecordTypeNormal:
-        return knownTime;
+        return normalTime;
       default:
         return normalTime;
     }
@@ -173,45 +174,46 @@ class PushProvider with ChangeNotifier {
 
   /// 添加新的推送数据（异步热加载）
   Future<void> addPushDataAsync(PushData data) async {
-    print('=== addPushDataAsync 开始 ===');
-    print(
-      'addPushData: objectId=${data.objectId}, createTime=${data.createTime}, recordType=${data.recordType}',
+    _logger.info('[${data.objectId}] === addPushDataAsync 开始🏃🏃🏃 ===');
+    _logger.info(
+      '[${data.objectId}] addPushData: objectId=${data.objectId}, createTime=${data.createTime}, recordType=${data.recordType}',
     );
 
     final shouldFilter = await _shouldFilterPushData(data);
-    print('过滤检查结果: shouldFilter=$shouldFilter');
+    _logger.info('[${data.objectId}] 过滤检查结果: shouldFilter=$shouldFilter');
 
+    // 如果是要被过滤的数据，要被return
     if (shouldFilter) {
-      print('过滤掉重复的人脸推送数据');
+      _logger.info('[${data.objectId}] 过滤掉重复的人脸推送数据');
       return;
     }
 
-    print('开始添加数据到列表，当前列表长度: ${_pushData.length}');
+    _logger.info('[${data.objectId}] 开始添加数据到列表，当前列表长度: ${_pushData.length}');
     _pushData.insert(0, data);
-    print('数据已添加到列表，新长度: ${_pushData.length}');
+    _logger.info('[${data.objectId}] 数据已添加到列表，新长度: ${_pushData.length}');
 
     // 根据人员类型限制展示数量
     await _limitDisplayCountByRecordType(data.recordType);
 
     await _setDisplayTimer(data);
-    print('显示定时器已设置');
+    _logger.info('[${data.objectId}] 显示定时器已设置');
 
     notifyListeners();
-    print('已通知监听器');
-    print('=== addPushDataAsync 结束 ===');
+    _logger.info('[${data.objectId}] 已通知监听器');
+    _logger.info('[${data.objectId}] === addPushDataAsync 结束 ===');
   }
 
   /// 根据人员类型限制展示数量（异步热加载）
   Future<void> _limitDisplayCountByRecordType(String recordType) async {
     final strangerMaxCount = await AppConfig.getStrangerMaxDisplayCount();
-    final knownMaxCount = await AppConfig.getKnownPersonMaxDisplayCount();
+    final normalMaxCount = await AppConfig.getNormalPersonMaxDisplayCount();
     int maxCount;
     if (recordType == kRecordTypeStranger) {
       maxCount = strangerMaxCount;
     } else if (recordType == kRecordTypeNormal) {
-      maxCount = knownMaxCount;
+      maxCount = normalMaxCount;
     } else {
-      maxCount = knownMaxCount;
+      maxCount = normalMaxCount;
     }
     List<PushData> filteredData;
     if (recordType == kRecordTypeStranger) {
@@ -275,14 +277,14 @@ class PushProvider with ChangeNotifier {
   void clearAllData() {
     print('清空所有推送数据');
     _pushData.clear();
-    
+
     // 取消所有定时器
     for (final timer in _displayTimers.values) {
       timer.cancel();
     }
     _displayTimers.clear();
     _displayStartTime.clear();
-    
+
     notifyListeners();
   }
 
@@ -301,12 +303,10 @@ class PushProvider with ChangeNotifier {
 
     // 获取各类型的过滤时间窗口
     final strangerFilterTime = await AppConfig.getStrangerFilterTimeWindow();
-    final knownFilterTime = await AppConfig.getKnownPersonFilterTimeWindow();
     final normalFilterTime = await AppConfig.getNormalPersonFilterTimeWindow();
 
     print('开始清理过期过滤记录...');
     print('陌生人过滤时间窗口: ${strangerFilterTime}ms');
-    print('白名单过滤时间窗口: ${knownFilterTime}ms');
     print('普通人员过滤时间窗口: ${normalFilterTime}ms');
 
     _lastPersonTime.forEach((personId, lastTime) {
@@ -317,7 +317,6 @@ class PushProvider with ChangeNotifier {
       // 在实际应用中，可能需要维护一个personId到recordType的映射
       final maxFilterTime = [
         strangerFilterTime,
-        knownFilterTime,
         normalFilterTime,
       ].reduce((a, b) => a > b ? a : b);
 
