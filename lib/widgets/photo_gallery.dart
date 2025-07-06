@@ -96,58 +96,49 @@ class _PhotoGalleryState extends State<PhotoGallery> {
   }
 
   Widget _buildWrapper(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        // gradient: LinearGradient(
-        //   begin: Alignment.topCenter,
-        //   end: Alignment.bottomCenter,
-        //   colors: [Colors.red[900]!, Colors.red[800]!, Colors.red[700]!],
-        // ),
-      ),
-      child: Consumer<PushProvider>(
-        builder: (context, provider, child) {
-          final pushDataList = provider.pushData;
+    return Consumer<PushProvider>(
+      builder: (context, provider, child) {
+        final pushDataList = provider.pushData;
 
-          // 调试模式：显示调试信息
-          if (PhotoGallery.debugMode) {
-            final debugInfo = provider.getDebugInfo();
-            print('=== 调试信息 ===');
-            print('推送数据数量: ${debugInfo['pushDataCount']}');
-            print('过滤记录数量: ${debugInfo['filterRecordCount']}');
-            print('人员类型记录数量: ${debugInfo['personRecordTypesCount']}');
-            print('显示定时器数量: ${debugInfo['displayTimersCount']}');
-            print('是否运行中: ${debugInfo['isRunning']}');
-            print('当前用户ID: ${debugInfo['currentUserId']}');
-            print('错误信息: ${debugInfo['error']}');
-            print('================');
-          }
+        // 调试模式：显示调试信息
+        if (PhotoGallery.debugMode) {
+          final debugInfo = provider.getDebugInfo();
+          print('=== 调试信息 ===');
+          print('推送数据数量: ${debugInfo['pushDataCount']}');
+          print('过滤记录数量: ${debugInfo['filterRecordCount']}');
+          print('人员类型记录数量: ${debugInfo['personRecordTypesCount']}');
+          print('显示定时器数量: ${debugInfo['displayTimersCount']}');
+          print('是否运行中: ${debugInfo['isRunning']}');
+          print('当前用户ID: ${debugInfo['currentUserId']}');
+          print('错误信息: ${debugInfo['error']}');
+          print('================');
+        }
 
-          if (pushDataList.isEmpty) {
-            return PhotoGallery.debugMode
-                ? _buildDebugEmptyState(provider)
-                : SizedBox();
-          }
+        if (pushDataList.isEmpty) {
+          return PhotoGallery.debugMode
+              ? _buildDebugEmptyState(provider)
+              : SizedBox();
+        }
 
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 调试模式：显示调试按钮
-                if (PhotoGallery.debugMode) _buildDebugControls(provider),
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 调试模式：显示调试按钮
+              if (PhotoGallery.debugMode) _buildDebugControls(provider),
 
-                // 白名单区域
-                Expanded(flex: 1, child: _buildWhiteList(pushDataList)),
+              // 白名单区域
+              Expanded(flex: 1, child: _buildWhiteList(pushDataList)),
 
-                const SizedBox(height: 8),
+              const SizedBox(height: 8),
 
-                // 陌生人区域
-                Expanded(flex: 1, child: _buildStrangerList(pushDataList)),
-              ],
-            ),
-          );
-        },
-      ),
+              // 陌生人区域
+              Expanded(flex: 1, child: _buildStrangerList(pushDataList)),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -310,9 +301,12 @@ class FaceCardWithDynamicColor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = pushData.portraitImage.url;
     final name = pushData.name;
     final recordType = pushData.recordType;
+    // 根据类型，展示不同图片
+    final imageUrl = recordType == kRecordTypeNormal
+        ? pushData.particular.portrait.picUrl
+        : pushData.portraitImage.url;
 
     // 添加调试日志
     _logger.info(
@@ -414,11 +408,11 @@ class FaceCardWithDynamicColor extends StatelessWidget {
   Future<Color> _getRecordTypeColor(String recordType) async {
     switch (recordType) {
       case kRecordTypeStranger:
-        return Colors.grey[600]!;
+        return Colors.grey[400]!;
       case kRecordTypeNormal:
-        return Colors.blue[600]!;
+        return Colors.blue[400]!;
       default:
-        return Colors.grey[600]!;
+        return Colors.grey[400]!;
     }
   }
 }

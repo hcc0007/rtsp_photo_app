@@ -53,7 +53,6 @@ class _LogScreenState extends State<LogScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('日志记录'),
-        backgroundColor: Colors.red[700],
         foregroundColor: Colors.white,
         actions: [
           IconButton(

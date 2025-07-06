@@ -74,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.red[700],
+      backgroundColor: AppConfig.theme,
       appBar: AppBar(
         title: const Text(
           'WELCOME',
@@ -85,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: Colors.red[700],
+        backgroundColor: AppConfig.theme,
         toolbarHeight: 120,
         actionsPadding: EdgeInsets.only(right: 24),
         elevation: 0,
@@ -134,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             AppConfig.company,
             style: TextStyle(
-              color: Colors.red[700],
+              color: AppConfig.theme,
               fontSize: 48,
               fontWeight: FontWeight.w900,
               fontFamily: 'PingFang SC',

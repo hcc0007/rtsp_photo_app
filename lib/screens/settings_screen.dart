@@ -129,7 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('设置'),
-        backgroundColor: Colors.red[700],
+        backgroundColor: AppConfig.theme,
         foregroundColor: Colors.white,
         actions: [
           IconButton(onPressed: _saveSettings, icon: const Icon(Icons.save)),
@@ -166,7 +166,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.red[400]!),
+                  borderSide: BorderSide(color: AppConfig.theme!),
                 ),
               ),
             ),
@@ -189,7 +189,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.red[400]!),
+                  borderSide: BorderSide(color: AppConfig.theme!),
                 ),
               ),
             ),
@@ -220,7 +220,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.red[400]!),
+                  borderSide: BorderSide(color: AppConfig.theme!),
                 ),
               ),
             ),
@@ -269,7 +269,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.red[400]!),
+                  borderSide: BorderSide(color: AppConfig.theme!),
                 ),
               ),
             ),
@@ -292,7 +292,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.red[400]!),
+                  borderSide: BorderSide(color: AppConfig.theme!),
                 ),
               ),
             ),
@@ -324,7 +324,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.red[400]!),
+                  borderSide: BorderSide(color: AppConfig.theme!),
                 ),
               ),
             ),
@@ -347,7 +347,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.red[400]!),
+                  borderSide: BorderSide(color: AppConfig.theme!),
                 ),
               ),
             ),
@@ -379,7 +379,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.red[400]!),
+                  borderSide: BorderSide(color: AppConfig.theme!),
                 ),
               ),
             ),
@@ -402,7 +402,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.red[400]!),
+                  borderSide: BorderSide(color: AppConfig.theme!),
                 ),
               ),
             ),

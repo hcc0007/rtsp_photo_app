@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:logging/logging.dart';
 import 'dart:convert';
@@ -5,6 +6,7 @@ import 'dart:convert';
 final Logger _logger = Logger('AppConfig');
 
 class AppConfig {
+  static final theme = Colors.red[500];
   static final Map<String, dynamic> _default = {
     'apiPort': '8080',
     'apiUrl': 'http://192.168.3.169',
