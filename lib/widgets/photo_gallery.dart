@@ -307,6 +307,9 @@ class FaceCardWithDynamicColor extends StatelessWidget {
     final name = pushData.name;
     final recordType = pushData.recordType;
 
+    // 添加调试日志
+    _logger.info('[DEBUG] FaceCard构建: objectId=${pushData.objectId}, imageUrl=$imageUrl, name=$name, recordType=$recordType');
+
     return FutureBuilder<Color>(
       future: _getRecordTypeColor(recordType),
       builder: (context, snapshot) {

@@ -37,6 +37,7 @@ class _SenseImageState extends State<SenseImage> {
   bool _isLoading = true;
   String? _errorMessage;
   String? _lastServerUrl;
+  String? _lastObjectKey;
   final String _ts = DateTime.now().millisecondsSinceEpoch.toString();
 
   @override
@@ -58,15 +59,18 @@ class _SenseImageState extends State<SenseImage> {
     // 动态获取服务器地址
     final apiUrl = await AppConfig.getFullServerUrl();
 
-    // 检查服务器地址是否发生变化
+    // 检查服务器地址和objectKey是否发生变化
     if (_lastServerUrl != null &&
         _lastServerUrl == apiUrl &&
+        _lastObjectKey != null &&
+        _lastObjectKey == widget.objectKey &&
         _imageBytes != null) {
-      // 服务器地址没有变化，且图片已加载，不需要重新加载
+      // 服务器地址和objectKey都没有变化，且图片已加载，不需要重新加载
       return;
     }
 
     _lastServerUrl = apiUrl;
+    _lastObjectKey = widget.objectKey;
     final url = '$apiUrl/gateway/sys/api/v1/images/${widget.objectKey}';
 
     final authInfo = Provider.of<AuthProvider>(
@@ -163,6 +167,16 @@ class _SenseImageState extends State<SenseImage> {
               }
             });
           }
+        }
+
+        // 检查objectKey是否发生变化
+        if (_lastObjectKey != null && _lastObjectKey != widget.objectKey) {
+          // objectKey发生变化，重新加载图片
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _loadImage();
+            }
+          });
         }
 
         if (_isLoading) {
