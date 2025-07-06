@@ -99,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actionsPadding: EdgeInsets.only(right: 24),
         elevation: 0,
         centerTitle: false,
-        actions: AppConfig.isDev ?  _buildActionButtons() : [],
+        actions: AppConfig.isDev ? _buildActionButtons() : [],
       ),
       body: SafeArea(
         child: Stack(
@@ -504,12 +504,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _handleToggleShowActions() {
     final now = DateTime.now();
-    
+
     // 如果是第一次点击，记录时间并启动定时器
     if (_firstWelcomeClick == null) {
       _firstWelcomeClick = now;
       _welcomeClickCount = 1;
-      
+
       // 启动20秒定时器
       _welcomeClickTimer = Timer(Duration(seconds: 20), () {
         if (mounted) {
@@ -524,11 +524,11 @@ class _HomeScreenState extends State<HomeScreen> {
       final timeDiff = now.difference(_firstWelcomeClick!).inSeconds;
       if (timeDiff <= 20) {
         _welcomeClickCount++;
-        
+
         // 如果达到20次点击，触发toggle
         if (_welcomeClickCount >= 20) {
           AppConfig.isDev = !AppConfig.isDev;
-          
+
           // 显示提示信息
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -537,12 +537,12 @@ class _HomeScreenState extends State<HomeScreen> {
               duration: Duration(seconds: 2),
             ),
           );
-          
+
           // 重置计数器
           _welcomeClickCount = 0;
           _firstWelcomeClick = null;
           _welcomeClickTimer?.cancel();
-          
+
           // 强制重建界面以显示/隐藏开发者按钮
           setState(() {});
         }
@@ -550,7 +550,7 @@ class _HomeScreenState extends State<HomeScreen> {
         // 超过20秒，重置计数器
         _welcomeClickCount = 1;
         _firstWelcomeClick = now;
-        
+
         // 重新启动定时器
         _welcomeClickTimer?.cancel();
         _welcomeClickTimer = Timer(Duration(seconds: 20), () {
