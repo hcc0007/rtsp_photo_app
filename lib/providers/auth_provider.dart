@@ -13,7 +13,6 @@ class AuthProvider with ChangeNotifier {
   bool _isLoggedIn = false;
   String? _errorMessage;
   UserInfo? _userInfo;
-  Timer? _tokenRefreshTimer;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -31,12 +30,6 @@ class AuthProvider with ChangeNotifier {
     _userInfo = userInfoMap != null ? UserInfo.fromJson(userInfoMap) : null;
 
     _logger.info('认证状态初始化完成 - 登录状态: $_isLoggedIn');
-
-    // 如果已登录，启动token刷新定时器
-    if (_isLoggedIn) {
-      _logger.info('用户已登录，启动token刷新定时器');
-      _startTokenRefreshTimer();
-    }
 
     notifyListeners();
   }
@@ -79,9 +72,6 @@ class AuthProvider with ChangeNotifier {
 
         _logger.info('自动登录成功');
 
-        // 启动token刷新定时器
-        _startTokenRefreshTimer();
-
         notifyListeners();
         return true;
       } else {
@@ -118,9 +108,6 @@ class AuthProvider with ChangeNotifier {
         // 登录成功后不赋值 _userInfo，也不调用 refreshUserInfo
         _clearError();
 
-        // 启动token刷新定时器
-        _startTokenRefreshTimer();
-
         notifyListeners();
         return true;
       } else {
@@ -135,34 +122,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // 刷新用户信息（用于保持token有效）
-  Future<bool> refreshUserInfo() async {
-    if (!_isLoggedIn) return false;
-
-    try {
-      _logger.fine('开始刷新用户信息');
-      final result = await _authService.getUserDetail();
-
-      if (result['success']) {
-        _userInfo = UserInfo.fromJson(result['data']);
-        _logger.fine('用户信息刷新成功');
-        notifyListeners();
-        return true;
-      } else {
-        _logger.warning('刷新用户信息失败: ${result['message']}');
-        // 如果获取用户信息失败，可能是token过期
-        if (result['code'] == 401 || result['code'] == 403) {
-          _logger.warning('Token可能已过期，执行登出操作');
-          await logout();
-        }
-        return false;
-      }
-    } catch (e) {
-      _logger.severe('刷新用户信息异常: $e');
-      return false;
-    }
-  }
-
   // 登出
   Future<void> logout() async {
     _logger.info('开始登出操作');
@@ -170,9 +129,6 @@ class AuthProvider with ChangeNotifier {
     _isLoggedIn = false;
     _userInfo = null;
     _clearError();
-
-    // 停止token刷新定时器
-    _stopTokenRefreshTimer();
 
     _logger.info('登出操作完成');
     notifyListeners();
@@ -205,42 +161,5 @@ class AuthProvider with ChangeNotifier {
   Future<void> reinitialize() async {
     _logger.info('重新初始化认证服务');
     await _authService.reinitialize();
-  }
-
-  // 启动token刷新定时器
-  void _startTokenRefreshTimer() async {
-    _stopTokenRefreshTimer(); // 先停止之前的定时器
-
-    // 获取用户设置的token刷新间隔
-    final refreshInterval = await AppConfig.getTokenRefreshInterval();
-    _logger.info('启动token刷新定时器，间隔: ${refreshInterval}ms');
-
-    // 使用用户设置的间隔刷新token
-    _tokenRefreshTimer = Timer.periodic(
-      Duration(milliseconds: refreshInterval),
-      (timer) async {
-        if (_isLoggedIn) {
-          final success = await refreshUserInfo();
-          if (!success) {
-            // 如果刷新失败，停止定时器
-            _logger.warning('Token刷新失败，停止定时器');
-            _stopTokenRefreshTimer();
-          }
-        } else {
-          // 如果未登录，停止定时器
-          _logger.info('用户未登录，停止token刷新定时器');
-          _stopTokenRefreshTimer();
-        }
-      },
-    );
-  }
-
-  // 停止token刷新定时器
-  void _stopTokenRefreshTimer() {
-    if (_tokenRefreshTimer != null) {
-      _logger.info('停止token刷新定时器');
-      _tokenRefreshTimer?.cancel();
-      _tokenRefreshTimer = null;
-    }
   }
 }

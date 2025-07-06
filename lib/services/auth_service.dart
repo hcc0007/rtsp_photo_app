@@ -37,8 +37,10 @@ class AuthService {
     // 设置基础URL
     final apiUrl = await _getServerUrl();
     _httpClient.setBaseUrl(apiUrl);
-    
-    _logger.info('AuthService初始化完成 - Token存在: ${_token != null && _token!.isNotEmpty}');
+
+    _logger.info(
+      'AuthService初始化完成 - Token存在: ${_token != null && _token!.isNotEmpty}',
+    );
   }
 
   // 重新初始化服务（用于设置更改后）
@@ -128,11 +130,11 @@ class AuthService {
   }) async {
     try {
       _logger.info('登录账号表单: username: $account, password: $password');
-      
+
       // 使用固定的登录超时时间（30秒）
       const loginTimeout = 30000;
       _logger.info('登录超时时间: ${loginTimeout}ms');
-      
+
       // 1. 获取RSA公钥和rsaId
       final rsaInfo = await _fetchRsaPub().timeout(
         const Duration(milliseconds: loginTimeout),
@@ -141,7 +143,7 @@ class AuthService {
           throw Exception('获取加密公钥超时');
         },
       );
-      
+
       if (rsaInfo == null) {
         return {'success': false, 'message': '获取加密公钥失败'};
       }
@@ -165,24 +167,29 @@ class AuthService {
       _logger.info('登录请求数据: $loginData');
 
       // 3. 发送登录请求（带超时）
-      final response = await _httpClient.post(
-        '/gateway/auth/api/v1/login',
-        data: loginData,
-      ).timeout(
-        const Duration(milliseconds: loginTimeout),
-        onTimeout: () {
-          _logger.severe('登录请求超时');
-          throw Exception('登录请求超时');
-        },
-      );
+      final response = await _httpClient
+          .post('/gateway/auth/api/v1/login', data: loginData)
+          .timeout(
+            const Duration(milliseconds: loginTimeout),
+            onTimeout: () {
+              _logger.severe('登录请求超时');
+              throw Exception('登录请求超时');
+            },
+          );
 
       final responseData = response.data as Map<String, dynamic>;
       if (responseData['success'] == true) {
-        await _updateUserSession(responseData['data']);
+        // 只保存token、用户名和密码
+        final sessionData = {
+          'token': responseData['data']['token'],
+          'username': account,
+          'password': password,
+        };
+        await _updateUserSession(sessionData);
         return {
           'success': true,
           'message': '登录成功',
-          'data': responseData['data'],
+          'data': sessionData,
         };
       } else {
         return {
@@ -200,49 +207,21 @@ class AuthService {
     }
   }
 
-  // 查询用户详情
-  Future<Map<String, dynamic>> getUserDetail() async {
-    if (!isLoggedIn) {
-      return {'success': false, 'message': '用户未登录'};
-    }
-
-    try {
-      final response = await _httpClient.get(
-        '/gateway/auth/api/v1/user/detail',
-      );
-      final responseData = response.data as Map<String, dynamic>;
-
-      if (responseData['success'] == true) {
-        await _updateUserSession(responseData['data']);
-        return {
-          'success': true,
-          'message': '获取用户信息成功',
-          'data': responseData['data'],
-        };
-      } else {
-        return {
-          'success': false,
-          'message': responseData['message'],
-          'code': responseData['code'],
-        };
-      }
-    } catch (e) {
-      _logger.severe('获取用户详情失败: $e');
-      return {'success': false, 'message': '获取用户详情失败: $e'};
-    }
-  }
-
   // 更新用户会话信息
   Future<void> _updateUserSession(Map<String, dynamic> userData) async {
     _token = userData['token'];
-    _userInfo = userData;
+    _userInfo = {
+      'token': userData['token'],
+      'username': userData['username'],
+      'password': userData['password'],
+    };
     _httpClient.setAuthToken(_token);
 
     // 通过AppConfig保存token和用户信息
     await AppConfig.setUserName(userData['username']);
     await AppConfig.setPassword(userData['password']);
     await AppConfig.setToken(_token!);
-    await AppConfig.setUserInfo(userData);
+    await AppConfig.setUserInfo(_userInfo!);
   }
 
   // 登出
