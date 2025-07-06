@@ -25,10 +25,14 @@ class PhotoGallery extends StatefulWidget {
 class _PhotoGalleryState extends State<PhotoGallery> {
   // 推送数据流订阅
   StreamSubscription<Map<String, dynamic>>? _pushDataSubscription;
+  
+  // 记录上一次的数据，用于精确检测变化
+  List<String> _lastDataIds = [];
 
   @override
   void initState() {
     super.initState();
+    
     // 监听推送数据流
     _pushDataSubscription = PushServerService.pushDataStream.listen((newData) {
       final ts = DateTime.now().millisecondsSinceEpoch.toString();
@@ -99,6 +103,9 @@ class _PhotoGalleryState extends State<PhotoGallery> {
     return Consumer<PushProvider>(
       builder: (context, provider, child) {
         final pushDataList = provider.pushData;
+        
+        // 检测数据变化并触发动画
+        _handleDataChange(pushDataList);
 
         // 调试模式：显示调试信息
         if (PhotoGallery.debugMode) {
@@ -141,6 +148,13 @@ class _PhotoGalleryState extends State<PhotoGallery> {
       },
     );
   }
+  
+  void _handleDataChange(List<PushData> currentData) {
+    final currentIds = currentData.map((data) => data.objectId).toList();
+    _lastDataIds = List.from(currentIds);
+  }
+  
+
 
   Widget _buildDebugEmptyState(PushProvider provider) {
     final debugInfo = provider.getDebugInfo();
@@ -269,6 +283,63 @@ class _PhotoGalleryState extends State<PhotoGallery> {
   }
 
   Widget _buildPersonGrid(List<PushData> dataList) {
+    return StableGridView(
+      dataList: dataList,
+    );
+  }
+}
+
+class StableGridView extends StatefulWidget {
+  final List<PushData> dataList;
+
+  const StableGridView({
+    super.key,
+    required this.dataList,
+  });
+
+  @override
+  State<StableGridView> createState() => _StableGridViewState();
+}
+
+class _StableGridViewState extends State<StableGridView> {
+  final Map<String, Widget> _stableCards = {};
+  final List<String> _currentOrder = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _updateCards();
+  }
+
+  @override
+  void didUpdateWidget(StableGridView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _updateCards();
+  }
+
+  void _updateCards() {
+    final newOrder = widget.dataList.map((data) => data.objectId).toList();
+    
+    // 添加新卡片
+    for (final data in widget.dataList) {
+      final objectId = data.objectId;
+      if (!_stableCards.containsKey(objectId)) {
+        _stableCards[objectId] = FaceCard(pushData: data);
+      }
+    }
+    
+    // 移除不存在的卡片
+    final toRemove = _stableCards.keys.where((key) => !newOrder.contains(key)).toList();
+    for (final key in toRemove) {
+      _stableCards.remove(key);
+    }
+    
+    _currentOrder.clear();
+    _currentOrder.addAll(newOrder);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return GridView.builder(
       padding: EdgeInsets.zero,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -277,13 +348,19 @@ class _PhotoGalleryState extends State<PhotoGallery> {
         crossAxisSpacing: 8, // 水平间距
         mainAxisSpacing: 8, // 垂直间距
       ),
-      itemCount: dataList.length,
+      itemCount: widget.dataList.length,
       itemBuilder: (context, index) {
-        return FaceCard(pushData: dataList[index]);
+        final data = widget.dataList[index];
+        final objectId = data.objectId;
+        
+        // 使用稳定的卡片实例，避免重新构建
+        return _stableCards[objectId] ?? FaceCard(pushData: data);
       },
     );
   }
 }
+
+
 
 class FaceCard extends StatelessWidget {
   final PushData pushData;
@@ -384,19 +461,19 @@ class FaceCardWithDynamicColor extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 8),
 
                 // TODO：准删除
-                // child: Text(pushData.objectId),
+                child: Text(pushData.objectId),
                 // TODO：注释不允许删除
-                child: Text(
-                  name,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: MediaQuery.of(context).size.width / 40,
-                    fontWeight: FontWeight.w300,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                // child: Text(
+                //   name,
+                //   textAlign: TextAlign.center,
+                //   style: TextStyle(
+                //     color: Colors.black,
+                //     fontSize: MediaQuery.of(context).size.width / 40,
+                //     fontWeight: FontWeight.w300,
+                //   ),
+                //   maxLines: 1,
+                //   overflow: TextOverflow.ellipsis,
+                // ),
               ),
             ],
           ),

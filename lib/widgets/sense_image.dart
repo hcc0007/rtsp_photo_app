@@ -12,6 +12,27 @@ import 'dart:io';
 
 final _logger = Logger('SenseImage');
 
+// 全局图片缓存
+class ImageCache {
+  static final Map<String, Uint8List> _cache = {};
+  
+  static Uint8List? get(String key) {
+    return _cache[key];
+  }
+  
+  static void set(String key, Uint8List data) {
+    _cache[key] = data;
+  }
+  
+  static bool contains(String key) {
+    return _cache.containsKey(key);
+  }
+  
+  static void clear() {
+    _cache.clear();
+  }
+}
+
 class SenseImage extends StatefulWidget {
   final String objectKey;
   final double? width;
@@ -53,6 +74,17 @@ class _SenseImageState extends State<SenseImage> {
         _errorMessage = '图片标识为空';
       });
       _logger.warning('[${widget.id ?? _ts}] 图片加载失败：$_errorMessage');
+      return;
+    }
+
+    // 检查缓存
+    if (ImageCache.contains(widget.objectKey)) {
+      setState(() {
+        _imageBytes = ImageCache.get(widget.objectKey);
+        _isLoading = false;
+        _errorMessage = null;
+      });
+      _logger.info('[${widget.id ?? _ts}] 从缓存加载图片: ${widget.objectKey}');
       return;
     }
 
@@ -119,13 +151,18 @@ class _SenseImageState extends State<SenseImage> {
       );
 
       if (response.data != null && response.data is List<int>) {
+        final imageData = Uint8List.fromList(response.data);
         setState(() {
-          _imageBytes = Uint8List.fromList(response.data);
+          _imageBytes = imageData;
           _isLoading = false;
           _errorMessage = null;
         });
+        
+        // 添加到缓存
+        ImageCache.set(widget.objectKey, imageData);
+        
         _logger.info(
-          '[${widget.id ?? _ts}] 图片数据设置成功，大小: ${_imageBytes!.length} 字节',
+          '[${widget.id ?? _ts}] 图片数据设置成功，大小: ${_imageBytes!.length} 字节，已缓存',
         );
       } else {
         setState(() {
@@ -144,185 +181,107 @@ class _SenseImageState extends State<SenseImage> {
   }
 
   @override
+  void didUpdateWidget(SenseImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // 检查objectKey是否发生变化
+    if (oldWidget.objectKey != widget.objectKey) {
+      _lastObjectKey = widget.objectKey;
+      _loadImage();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String>(
-      future: AppConfig.getFullServerUrl(),
-      builder: (context, snapshot) {
-        // 如果服务器地址发生变化，重新加载图片
-        if (snapshot.hasData && snapshot.data != null) {
-          final currentServerUrl = snapshot.data!;
-          // 检查服务器地址是否发生变化
-          if (_lastServerUrl != null && _lastServerUrl != currentServerUrl) {
-            // 服务器地址发生变化，重新加载图片
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                _loadImage();
-              }
-            });
-          } else if (_lastServerUrl == null) {
-            // 首次加载
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                _loadImage();
-              }
-            });
-          }
-        }
-
-        // 检查objectKey是否发生变化
-        if (_lastObjectKey != null && _lastObjectKey != widget.objectKey) {
-          // objectKey发生变化，重新加载图片
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              _loadImage();
-            }
-          });
-        }
-
-        if (_isLoading) {
-          return Container(
-            width: widget.width,
-            height: widget.height,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.grey[400]!,
-                      ),
-                    ),
+    if (_isLoading) {
+      return Container(
+        width: widget.width,
+        height: widget.height,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Colors.grey[400]!,
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    '加载中...',
-                    style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        if (_errorMessage != null) {
-          return Container(
-            width: widget.width,
-            height: widget.height,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.person, size: 48, color: Colors.grey[600]),
-                  // SizedBox(height: 4),
-                  // Text(
-                  //   '加载失败',
-                  //   style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                  // ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        if (_imageBytes == null || _imageBytes!.isEmpty) {
-          return Container(
-            width: widget.width,
-            height: widget.height,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.person, size: 48, color: Colors.grey[600]),
-                  // Icon(
-                  //   Icons.image_not_supported,
-                  //   size: 24,
-                  //   color: Colors.grey[600],
-                  // ),
-                  // SizedBox(height: 4),
-                  // Text(
-                  //   '无图片',
-                  //   style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                  // ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        if (_errorMessage != null) {
-          return Container(
-            width: widget.width,
-            height: widget.height,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.person, size: 48, color: Colors.grey[600]),
-                ],
-              ),
-            ),
-          );
-        }
-
-        if (_imageBytes == null || _imageBytes!.isEmpty) {
-          return Container(
-            width: widget.width,
-            height: widget.height,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.person, size: 48, color: Colors.grey[600]),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return Image.memory(
-          _imageBytes!,
-          width: widget.width,
-          height: widget.height,
-          fit: widget.fit,
-          errorBuilder: (context, error, stackTrace) {
-            _logger.severe('[${widget.id ?? _ts}] Image.memory 渲染失败: $error');
-            return Container(
-              width: widget.width,
-              height: widget.height,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.person, size: 48, color: Colors.grey[600]),
-                  ],
                 ),
               ),
-            );
-          },
+              SizedBox(height: 4),
+              Text(
+                '加载中...',
+                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.person, size: 48, color: Colors.grey[600]),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_imageBytes == null || _imageBytes!.isEmpty) {
+      return Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.person, size: 48, color: Colors.grey[600]),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Image.memory(
+      _imageBytes!,
+      width: widget.width,
+      height: widget.height,
+      fit: widget.fit,
+      errorBuilder: (context, error, stackTrace) {
+        _logger.severe('[${widget.id ?? _ts}] Image.memory 渲染失败: $error');
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.person, size: 48, color: Colors.grey[600]),
+              ],
+            ),
+          ),
         );
       },
     );

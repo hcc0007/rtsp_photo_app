@@ -20,7 +20,7 @@ class AppConfig {
     'strangerFilterTimeWindow': 30000,
     'normalPersonFilterTimeWindow': 45000,
     'normalPersonMaxDisplayCount': 5,
-    'strangerMaxDisplayCount': 10,
+    'strangerMaxDisplayCount': 5,
     'username': 'ops',
     'password': 'Test@001',
     'token': '',
