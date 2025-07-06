@@ -353,7 +353,7 @@ class FaceCardWithDynamicColor extends StatelessWidget {
                   ],
                 ),
                 child: ClipOval(
-                  child: imageUrl.isNotEmpty
+                  child: imageUrl != null && imageUrl.isNotEmpty
                       ? SenseImage(
                           objectKey: imageUrl,
                           id: 'objectId_${pushData.objectId}',
