@@ -381,6 +381,32 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
+      // Debug模式开关
+      StatefulBuilder(
+        builder: (context, setState) {
+          return Row(
+            children: [
+              const Text('Debug', style: TextStyle(color: Colors.white)),
+              Switch(
+                value: PhotoGallery.debugMode,
+                onChanged: (val) {
+                  setState(() {
+                    PhotoGallery.debugMode = val;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(val ? 'Debug模式已开启' : 'Debug模式已关闭'),
+                      backgroundColor: val ? Colors.green : Colors.grey,
+                    ),
+                  );
+                },
+                activeColor: Colors.green,
+                inactiveThumbColor: Colors.grey,
+              ),
+            ],
+          );
+        },
+      ),
     ];
   }
 }

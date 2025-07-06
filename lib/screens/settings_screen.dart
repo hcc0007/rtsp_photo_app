@@ -17,8 +17,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _serverPortController = TextEditingController();
   // rtsp
   final _rtspController = TextEditingController();
-  // token刷新时间
-  final _tokenRefreshController = TextEditingController();
+
   // 白名单 - 显示在大屏幕的时间
   final _normalPersonDisplayController = TextEditingController();
   // 陌生人 - 显示在大屏幕的时间
@@ -48,7 +47,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _serverUrlController.text = AppConfig.apiUrl;
       _serverPortController.text = AppConfig.apiPort;
       _rtspController.text = AppConfig.defaultRtspUrl;
-      _tokenRefreshController.text = AppConfig.tokenRefreshInterval.toString();
       _normalPersonDisplayController.text = AppConfig.knownPersonDisplayTime
           .toString();
       _strangerDisplayController.text = AppConfig.strangerDisplayTime
@@ -76,7 +74,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await AppConfig.setServerUrl(_serverUrlController.text);
     await AppConfig.setServerPort(_serverPortController.text);
     await AppConfig.setRtspUrl(_rtspController.text);
-    await AppConfig.setTokenRefreshInterval(int.parse(_tokenRefreshController.text));
     await AppConfig.setKnownPersonDisplayTime(
       int.parse(_normalPersonDisplayController.text),
     );
@@ -193,29 +190,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _tokenRefreshController,
-              style: const TextStyle(color: Colors.black),
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Token刷新间隔（毫秒）',
-                labelStyle: const TextStyle(color: Colors.grey),
-                hintText: '1500000',
-                hintStyle: const TextStyle(color: Colors.grey),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Colors.grey),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.red[400]!),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
             const Text(
               'RTSP视频流配置',
               style: TextStyle(
@@ -246,16 +220,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'API配置',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
             const SizedBox(height: 32),
             const Text(
               '说明',
@@ -269,10 +233,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Text(
               '• 服务器地址：输入您的服务器IP地址或域名\n'
               '• 服务器端口：输入服务器监听的端口号\n'
-              '• Token刷新间隔：设置token自动刷新的时间间隔（毫秒）\n'
               '• RTSP地址：输入您的RTSP视频流地址，支持H264编码\n'
-              '• API地址：输入获取照片列表的API接口地址\n'
-              '• API应返回字符串数组格式的照片URL列表\n'
               '• 设置保存后需要重启应用生效',
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
@@ -452,7 +413,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _serverUrlController.dispose();
     _serverPortController.dispose();
     _rtspController.dispose();
-    _tokenRefreshController.dispose();
     _normalPersonDisplayController.dispose();
     _strangerDisplayController.dispose();
     _strangerFilterTimeController.dispose();

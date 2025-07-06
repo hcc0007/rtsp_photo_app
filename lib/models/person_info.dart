@@ -75,7 +75,9 @@ class PersonInfo {
       applet: Applet.fromJson(json['applet'] ?? {}),
     );
   }
+}
 
+class PersonInfoUtils {
   static String getRecordTypeText(String recordType) {
     switch (recordType) {
       case 'portrait_stranger':

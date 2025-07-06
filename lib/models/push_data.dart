@@ -60,7 +60,7 @@ class PushData extends PersonInfo {
     final recordType = json['recordType'] ?? '';
     String name = '';
     if (recordType == 'portrait_stranger') {
-      name = '未知';
+      name = '陌生人';
     } else {
       name =
           json['particular']?['portrait']?['name']?.toString() ??

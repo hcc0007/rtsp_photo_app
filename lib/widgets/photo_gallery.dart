@@ -1,10 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rtsp_photo_app/models/push_data.dart';
 import '../providers/push_provider.dart';
 import '../services/push_server_service.dart';
 import '../widgets/sense_image.dart';
-import '../config/app_config.dart';
 import 'package:logging/logging.dart';
 import 'dart:async';
 
@@ -14,6 +15,7 @@ const String kRecordTypeStranger = 'portrait_stranger';
 const String kRecordTypeNormal = 'portrait_normal';
 
 class PhotoGallery extends StatefulWidget {
+  static bool debugMode = false;
   const PhotoGallery({super.key});
 
   @override
@@ -21,9 +23,6 @@ class PhotoGallery extends StatefulWidget {
 }
 
 class _PhotoGalleryState extends State<PhotoGallery> {
-  // 调试模式(不过滤)，开发时可以设为 true
-  static const bool _debugMode = false;
-
   // 推送数据流订阅
   StreamSubscription<Map<String, dynamic>>? _pushDataSubscription;
 
@@ -35,7 +34,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
       final ts = DateTime.now().millisecondsSinceEpoch.toString();
       try {
         _logger.info('[$ts] 人脸推送数据： 开始解析🔍');
-        _logger.info('[$ts] 原始数据: $newData');
+        _logger.info('[$ts] 原始数据: ${jsonEncode(newData)}');
         final pushData = PushData.fromJson(newData);
         _logger.info('[$ts] 人脸推送数据： 解析成功🏅');
         _logger.info(
@@ -49,7 +48,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
           );
           try {
             // 调试模式：临时禁用过滤
-            if (_debugMode) {
+            if (PhotoGallery.debugMode) {
               Provider.of<PushProvider>(
                 context,
                 listen: false,
@@ -72,7 +71,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
         _logger.severe('[$ts] 原始数据: $newData');
 
         // 调试模式下显示错误信息
-        if (_debugMode && mounted) {
+        if (PhotoGallery.debugMode && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('数据解析失败: $e'),
@@ -110,7 +109,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
           final pushDataList = provider.pushData;
 
           // 调试模式：显示调试信息
-          if (_debugMode) {
+          if (PhotoGallery.debugMode) {
             final debugInfo = provider.getDebugInfo();
             print('=== 调试信息 ===');
             print('推送数据数量: ${debugInfo['pushDataCount']}');
@@ -123,9 +122,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
           }
 
           if (pushDataList.isEmpty) {
-            return _debugMode 
-              ? _buildDebugEmptyState(provider)
-              : SizedBox();
+            return PhotoGallery.debugMode ? _buildDebugEmptyState(provider) : SizedBox();
           }
 
           return Container(
@@ -134,8 +131,8 @@ class _PhotoGalleryState extends State<PhotoGallery> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 调试模式：显示调试按钮
-                if (_debugMode) _buildDebugControls(provider),
-                
+                if (PhotoGallery.debugMode) _buildDebugControls(provider),
+
                 // 白名单区域
                 SizedBox(height: 170, child: _buildWhiteList(pushDataList)),
 
@@ -211,9 +208,9 @@ class _PhotoGalleryState extends State<PhotoGallery> {
           ElevatedButton(
             onPressed: () {
               provider.clearAllFilters();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('已清空过滤记录')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('已清空过滤记录')));
             },
             child: Text('清空过滤'),
             style: ElevatedButton.styleFrom(
@@ -224,9 +221,9 @@ class _PhotoGalleryState extends State<PhotoGallery> {
           ElevatedButton(
             onPressed: () {
               provider.clearAllData();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('已清空所有数据')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('已清空所有数据')));
             },
             child: Text('清空数据'),
             style: ElevatedButton.styleFrom(
@@ -239,7 +236,9 @@ class _PhotoGalleryState extends State<PhotoGallery> {
               final debugInfo = provider.getDebugInfo();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('数据: ${debugInfo['pushDataCount']}, 过滤: ${debugInfo['filterRecordCount']}'),
+                  content: Text(
+                    '数据: ${debugInfo['pushDataCount']}, 过滤: ${debugInfo['filterRecordCount']}',
+                  ),
                   duration: Duration(seconds: 2),
                 ),
               );
@@ -257,21 +256,21 @@ class _PhotoGalleryState extends State<PhotoGallery> {
 
   Widget _buildStrangerList(List<PushData> pushDataList) {
     return _buildPersonGrid(
-      pushDataList.where((data) => data.recordType == kRecordTypeStranger).toList(),
+      pushDataList
+          .where((data) => data.recordType == kRecordTypeStranger)
+          .toList(),
     );
   }
 
   Widget _buildWhiteList(List<PushData> pushDataList) {
     return _buildPersonGrid(
-      pushDataList.where((data) => data.recordType == kRecordTypeNormal).toList(),
+      pushDataList
+          .where((data) => data.recordType == kRecordTypeNormal)
+          .toList(),
     );
   }
 
   Widget _buildPersonGrid(List<PushData> dataList) {
-    if (dataList.isEmpty) {
-      return _buildEmptyDataList();
-    }
-
     return GridView.builder(
       padding: EdgeInsets.zero,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -284,29 +283,6 @@ class _PhotoGalleryState extends State<PhotoGallery> {
       itemBuilder: (context, index) {
         return FaceCard(pushData: dataList[index]);
       },
-    );
-  }
-
-  Widget _buildEmptyDataList() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.people_outline,
-            size: 48,
-            color: Colors.white.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '暂无数据',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6),
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

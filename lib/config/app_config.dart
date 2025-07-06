@@ -222,7 +222,6 @@ class AppConfig {
     apiUrl = await getServerUrl();
     apiPort = await getServerPort();
     defaultRtspUrl = await getRtspUrl();
-    tokenRefreshInterval = await getTokenRefreshInterval();
     knownPersonDisplayTime = await getKnownPersonDisplayTime();
     normalPersonDisplayTime = await getNormalPersonDisplayTime();
     knownPersonDisplayTime = await getKnownPersonDisplayTime();
@@ -262,7 +261,6 @@ class AppConfig {
     _logger.info('服务器地址: ${await getServerUrl()}');
     _logger.info('服务器端口: ${await getServerPort()}');
     _logger.info('RTSP地址: ${await getRtspUrl()}');
-    _logger.info('Token刷新间隔: ${await getTokenRefreshInterval()}ms');
     _logger.info('已知人员显示时间: ${await getKnownPersonDisplayTime()}ms');
     _logger.info('陌生人显示时间: ${await getStrangerDisplayTime()}ms');
   }
@@ -363,21 +361,6 @@ class AppConfig {
     } catch (e) {
       _logger.warning('获取RTSP地址失败，使用默认值', e);
       return _default['defaultRtspUrl'];
-    }
-  }
-
-  // 获取用户设置的token刷新间隔
-  static Future<int> getTokenRefreshInterval() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final value =
-          prefs.getInt(_keyTokenRefreshInterval) ??
-          _default['tokenRefreshInterval'];
-      _logger.fine('获取Token刷新间隔: ${value}ms');
-      return value;
-    } catch (e) {
-      _logger.warning('获取Token刷新间隔失败，使用默认值', e);
-      return _default['tokenRefreshInterval'];
     }
   }
 
@@ -549,18 +532,6 @@ class AppConfig {
       _logger.info('设置RTSP地址: $value');
     } catch (e) {
       _logger.severe('设置RTSP地址失败', e);
-      rethrow;
-    }
-  }
-
-  // 设置Token刷新间隔
-  static Future<void> setTokenRefreshInterval(int value) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_keyTokenRefreshInterval, value);
-      _logger.info('设置Token刷新间隔: ${value}ms');
-    } catch (e) {
-      _logger.severe('设置Token刷新间隔失败', e);
       rethrow;
     }
   }
