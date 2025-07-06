@@ -74,7 +74,7 @@ class AuthProvider with ChangeNotifier {
 
       if (result['success']) {
         _isLoggedIn = true;
-        _userInfo = UserInfo.fromJson(result['data']);
+        // 登录成功后不赋值 _userInfo，也不调用 refreshUserInfo
         _clearError();
 
         _logger.info('自动登录成功');
@@ -115,7 +115,7 @@ class AuthProvider with ChangeNotifier {
 
       if (result['success']) {
         _isLoggedIn = true;
-        _userInfo = UserInfo.fromJson(result['data']);
+        // 登录成功后不赋值 _userInfo，也不调用 refreshUserInfo
         _clearError();
 
         // 启动token刷新定时器
