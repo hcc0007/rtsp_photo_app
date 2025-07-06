@@ -150,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildDateNowInfo() {
     // 格式化时间、日期、星期
     String timeStr = _now.toLocal().toString().substring(11, 19); // HH:mm:ss
-    String dateStr = "${_now.year}年${_now.month}月${_now.day}日";
+    String dateStr = "${_now.year}/${_now.month}/${_now.day}";
     const weekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
     String weekStr = weekDays[_now.weekday % 7];
 
@@ -166,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.white,
               fontSize: MediaQuery.of(context).size.width / 12,
               fontWeight: FontWeight.w300,
-              letterSpacing: 4,
+              letterSpacing: -4,
             ),
           ),
           Row(
@@ -177,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: MediaQuery.of(context).size.width / 28,
-                  fontWeight: FontWeight.w200,
+                  fontWeight: FontWeight.w300,
                 ),
               ),
               SizedBox(width: 16),
@@ -186,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: MediaQuery.of(context).size.width / 28,
-                  fontWeight: FontWeight.w200,
+                  fontWeight: FontWeight.w300,
                 ),
               ),
             ],
