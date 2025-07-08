@@ -85,10 +85,23 @@ class PushProvider with ChangeNotifier {
     _currentUserId = null;
   }
 
-  /// 获取人员唯一标识 objectId + recordType
-  /// 因为同一个objectId可能同时存在陌生人和白名单，需要区分处理
+  /// 获取人员唯一标识
+  /// 白名单人员：使用 portraitId
+  /// 陌生人：使用 objectId
   String _getPersonIdentifier(PushData data) {
-    return '${data.objectId}_${data.recordType}';
+    if (data.recordType == kRecordTypeNormal) {
+      // 白名单人员：使用 portraitId
+      final portraitId = data.particular.portrait.portraitId?.toString() ?? data.objectId;
+      if (data.particular.portrait.portraitId == null) {
+        _logger.warning(
+          '[${data.objectId}] ⚠️⚠️⚠️ 白名单人员缺少portraitId，使用objectId作为替代: objectId=${data.objectId}',
+        );
+      }
+      return portraitId;
+    } else {
+      // 陌生人：使用 objectId
+      return data.objectId;
+    }
   }
 
   /// 检查是否应该过滤掉这个推送数据（异步热加载）
@@ -104,33 +117,42 @@ class PushProvider with ChangeNotifier {
       // 获取过滤时间窗口
       final filterWindow = await _getFilterTimeWindowByRecordType(data.recordType);
       
+      final keyInfo = data.recordType == kRecordTypeNormal 
+          ? 'portraitId=${data.particular.portrait.portraitId ?? data.objectId}'
+          : 'objectId=${data.objectId}';
       _logger.info(
-        '[${data.objectId}] 检查过滤🔍🔍🔍: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 当前时间=$currentTime, 过滤窗口=${filterWindow}ms',
+        '[${data.objectId}] 检查过滤🔍🔍🔍: personId=$personId ($keyInfo), recordType=${data.recordType}, 当前时间=$currentTime, 过滤窗口=${filterWindow}ms',
       );
       
-      _logger.info('[${data.objectId}] 发现重复人员: personId=$personId (objectId=${data.objectId}_${data.recordType}), 上次时间=$lastTime, 时间差=${timeDiff}ms');
+      _logger.info('[${data.objectId}] 发现重复人员: personId=$personId ($keyInfo), 上次时间=$lastTime, 时间差=${timeDiff}ms');
 
       if (timeDiff < filterWindow) {
         _logger.info(
-          '[${data.objectId}] 快速过滤推送数据: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 时间差=${timeDiff}ms < ${filterWindow}ms',
+          '[${data.objectId}] 快速过滤推送数据: personId=$personId ($keyInfo), recordType=${data.recordType}, 时间差=${timeDiff}ms < ${filterWindow}ms',
         );
         return true; // 过滤掉
       } else {
         _logger.info(
-          '[${data.objectId}] 时间已过期，允许推送: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 时间差=${timeDiff}ms >= ${filterWindow}ms',
+          '[${data.objectId}] 时间已过期，允许推送: personId=$personId ($keyInfo), recordType=${data.recordType}, 时间差=${timeDiff}ms >= ${filterWindow}ms',
         );
       }
     } else {
+      final keyInfo = data.recordType == kRecordTypeNormal 
+          ? 'portraitId=${data.particular.portrait.portraitId ?? data.objectId}'
+          : 'objectId=${data.objectId}';
       _logger.info(
-        '[${data.objectId}] 检查过滤🔍🔍🔍: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 当前时间=$currentTime, 新人员',
+        '[${data.objectId}] 检查过滤🔍🔍🔍: personId=$personId ($keyInfo), recordType=${data.recordType}, 当前时间=$currentTime, 新人员',
       );
-      _logger.info('[${data.objectId}] 新人员，允许推送: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}');
+      _logger.info('[${data.objectId}] 新人员，允许推送: personId=$personId ($keyInfo), recordType=${data.recordType}');
     }
 
     // 更新最后推送时间
     _lastPersonTime[personId] = currentTime;
+    final keyInfo = data.recordType == kRecordTypeNormal 
+        ? 'portraitId=${data.particular.portrait.portraitId ?? data.objectId}'
+        : 'objectId=${data.objectId}';
     _logger.info(
-      '[${data.objectId}] 更新最后推送时间: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 时间=$currentTime',
+      '[${data.objectId}] 更新最后推送时间: personId=$personId ($keyInfo), recordType=${data.recordType}, 时间=$currentTime',
     );
     return false;
   }
@@ -176,8 +198,11 @@ class PushProvider with ChangeNotifier {
     
     // 获取过滤时间窗口
     _getFilterTimeWindowByRecordType(data.recordType).then((filterTime) {
+      final keyInfo = data.recordType == kRecordTypeNormal 
+          ? 'portraitId=${data.particular.portrait.portraitId ?? data.objectId}'
+          : 'objectId=${data.objectId}';
       _logger.info(
-        '[${data.objectId}] ⏰⏰⏰ 设置显示定时器: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 配置显示时间=${displayTime}ms, 过滤时间窗口=${filterTime}ms, 开始时间=$currentTime',
+        '[${data.objectId}] ⏰⏰⏰ 设置显示定时器: personId=$personId ($keyInfo), recordType=${data.recordType}, 配置显示时间=${displayTime}ms, 过滤时间窗口=${filterTime}ms, 开始时间=$currentTime',
       );
     });
   }
@@ -247,8 +272,11 @@ class PushProvider with ChangeNotifier {
         
         // 获取过滤时间窗口
         _getFilterTimeWindowByRecordType(removeData.recordType).then((filterTime) {
+          final keyInfo = removeData.recordType == kRecordTypeNormal 
+              ? 'portraitId=${removeData.particular.portrait.portraitId ?? removeData.objectId}'
+              : 'objectId=${removeData.objectId}';
           _logger.info(
-            '[${removeData.objectId}] 🗑️🗑️🗑️ 数量限制移出人脸: personId=$personId (objectId=${removeData.objectId}_${removeData.recordType}), recordType=${removeData.recordType}, 显示时长=${actualDisplayTime}ms, 过滤时间窗口=${filterTime}ms, 原因=超过最大显示数量',
+            '[${removeData.objectId}] 🗑️🗑️🗑️ 数量限制移出人脸: personId=$personId ($keyInfo), recordType=${removeData.recordType}, 显示时长=${actualDisplayTime}ms, 过滤时间窗口=${filterTime}ms, 原因=超过最大显示数量',
           );
         });
         
@@ -334,8 +362,11 @@ class PushProvider with ChangeNotifier {
       
       // 获取过滤时间窗口
       _getFilterTimeWindowByRecordType(data.recordType).then((filterTime) {
+        final keyInfo = data.recordType == kRecordTypeNormal 
+            ? 'portraitId=${data.particular.portrait.portraitId ?? data.objectId}'
+            : 'objectId=${data.objectId}';
         _logger.info(
-          '[${data.objectId}] 🗑️🗑️🗑️ 移出人脸: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 显示时长=${actualDisplayTime}ms, 过滤时间窗口=${filterTime}ms',
+          '[${data.objectId}] 🗑️🗑️🗑️ 移出人脸: personId=$personId ($keyInfo), recordType=${data.recordType}, 显示时长=${actualDisplayTime}ms, 过滤时间窗口=${filterTime}ms',
         );
       });
     }
