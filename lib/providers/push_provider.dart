@@ -96,24 +96,23 @@ class PushProvider with ChangeNotifier {
     final personId = _getPersonIdentifier(data);
     final currentTime = DateTime.now().millisecondsSinceEpoch;
 
-    // 根据人员类型获取对应的过滤时间窗口
-    final filterWindow = await _getFilterTimeWindowByRecordType(
-      data.recordType,
-    );
-
-    _logger.info(
-      '[${data.objectId}] 检查过滤🔍🔍🔍: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 当前时间=$currentTime, 过滤窗口=${filterWindow}ms',
-    );
-
-    // 检查是否在过滤时间窗口内
+    // 快速检查：如果已经存在记录，先进行快速过滤判断
     if (_lastPersonTime.containsKey(personId)) {
       final lastTime = _lastPersonTime[personId]!;
       final timeDiff = currentTime - lastTime;
+      
+      // 获取过滤时间窗口
+      final filterWindow = await _getFilterTimeWindowByRecordType(data.recordType);
+      
+      _logger.info(
+        '[${data.objectId}] 检查过滤🔍🔍🔍: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 当前时间=$currentTime, 过滤窗口=${filterWindow}ms',
+      );
+      
       _logger.info('[${data.objectId}] 发现重复人员: personId=$personId (objectId=${data.objectId}_${data.recordType}), 上次时间=$lastTime, 时间差=${timeDiff}ms');
 
       if (timeDiff < filterWindow) {
         _logger.info(
-          '[${data.objectId}] 过滤推送数据: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 时间差=${timeDiff}ms < ${filterWindow}ms',
+          '[${data.objectId}] 快速过滤推送数据: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 时间差=${timeDiff}ms < ${filterWindow}ms',
         );
         return true; // 过滤掉
       } else {
@@ -122,6 +121,9 @@ class PushProvider with ChangeNotifier {
         );
       }
     } else {
+      _logger.info(
+        '[${data.objectId}] 检查过滤🔍🔍🔍: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 当前时间=$currentTime, 新人员',
+      );
       _logger.info('[${data.objectId}] 新人员，允许推送: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}');
     }
 
