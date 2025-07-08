@@ -169,7 +169,14 @@ class PushProvider with ChangeNotifier {
     _displayStartTime[personId] = currentTime;
     _displayTimers[personId]?.cancel();
     _displayTimers[personId] = Timer(Duration(milliseconds: displayTime), () {
-      _removePushData(personId);
+      _removePushData(personId, data.recordType, displayTime);
+    });
+    
+    // 获取过滤时间窗口
+    _getFilterTimeWindowByRecordType(data.recordType).then((filterTime) {
+      _logger.info(
+        '[${data.objectId}] ⏰⏰⏰ 设置显示定时器: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 配置显示时间=${displayTime}ms, 过滤时间窗口=${filterTime}ms, 开始时间=$currentTime',
+      );
     });
   }
 
@@ -232,6 +239,17 @@ class PushProvider with ChangeNotifier {
       final toRemoveData = filteredData.take(toRemove).toList();
       for (final removeData in toRemoveData) {
         final personId = _getPersonIdentifier(removeData);
+        final currentTime = DateTime.now().millisecondsSinceEpoch;
+        final startTime = _displayStartTime[personId] ?? currentTime;
+        final actualDisplayTime = currentTime - startTime;
+        
+        // 获取过滤时间窗口
+        _getFilterTimeWindowByRecordType(removeData.recordType).then((filterTime) {
+          _logger.info(
+            '[${removeData.objectId}] 🗑️🗑️🗑️ 数量限制移出人脸: personId=$personId (objectId=${removeData.objectId}_${removeData.recordType}), recordType=${removeData.recordType}, 显示时长=${actualDisplayTime}ms, 过滤时间窗口=${filterTime}ms, 原因=超过最大显示数量',
+          );
+        });
+        
         _displayTimers[personId]?.cancel();
         _displayTimers.remove(personId);
         _displayStartTime.remove(personId);
@@ -291,7 +309,22 @@ class PushProvider with ChangeNotifier {
   }
 
   /// 移除推送数据
-  void _removePushData(String personId) {
+  void _removePushData(String personId, [String? recordType, int? displayTime]) {
+    final removedData = _pushData.where((data) => _getPersonIdentifier(data) == personId).toList();
+    if (removedData.isNotEmpty) {
+      final data = removedData.first;
+      final currentTime = DateTime.now().millisecondsSinceEpoch;
+      final startTime = _displayStartTime[personId] ?? currentTime;
+      final actualDisplayTime = currentTime - startTime;
+      
+      // 获取过滤时间窗口
+      _getFilterTimeWindowByRecordType(data.recordType).then((filterTime) {
+        _logger.info(
+          '[${data.objectId}] 🗑️🗑️🗑️ 移出人脸: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 显示时长=${actualDisplayTime}ms, 过滤时间窗口=${filterTime}ms',
+        );
+      });
+    }
+    
     _pushData.removeWhere((data) => _getPersonIdentifier(data) == personId);
     _displayTimers.remove(personId);
     _displayStartTime.remove(personId);
