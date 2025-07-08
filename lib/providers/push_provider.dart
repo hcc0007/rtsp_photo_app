@@ -23,7 +23,6 @@ class PushProvider with ChangeNotifier {
   Map<String, int> _lastPersonTime = {}; // 记录每个人的最后推送时间 - 防止短时间内重复推送同一个人的人脸识别结果
   Map<String, Timer> _displayTimers = {}; // 记录显示定时器 - 控制每个人脸识别结果在界面上的显示时长
   Map<String, int> _displayStartTime = {}; // 记录显示开始时间 - 记录每个人脸识别结果开始显示的时间
-  Map<String, String> _personRecordTypes = {}; // 记录每个人的类型 - 用于精确清理过期记录
 
   List<PushData> get pushData => _pushData;
   String? get error => _error;
@@ -86,9 +85,10 @@ class PushProvider with ChangeNotifier {
     _currentUserId = null;
   }
 
-  /// 获取人员唯一标识 objectId
+  /// 获取人员唯一标识 objectId + recordType
+  /// 因为同一个objectId可能同时存在陌生人和白名单，需要区分处理
   String _getPersonIdentifier(PushData data) {
-    return data.objectId;
+    return '${data.objectId}_${data.recordType}';
   }
 
   /// 检查是否应该过滤掉这个推送数据（异步热加载）
@@ -102,35 +102,33 @@ class PushProvider with ChangeNotifier {
     );
 
     _logger.info(
-      '[${data.objectId}] 检查过滤🔍🔍🔍: personId=$personId, recordType=${data.recordType}, 当前时间=$currentTime, 过滤窗口=${filterWindow}ms',
+      '[${data.objectId}] 检查过滤🔍🔍🔍: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 当前时间=$currentTime, 过滤窗口=${filterWindow}ms',
     );
 
     // 检查是否在过滤时间窗口内
     if (_lastPersonTime.containsKey(personId)) {
       final lastTime = _lastPersonTime[personId]!;
       final timeDiff = currentTime - lastTime;
-      _logger.info('[${data.objectId}] 发现重复人员: personId=$personId, 上次时间=$lastTime, 时间差=${timeDiff}ms');
+      _logger.info('[${data.objectId}] 发现重复人员: personId=$personId (objectId=${data.objectId}_${data.recordType}), 上次时间=$lastTime, 时间差=${timeDiff}ms');
 
       if (timeDiff < filterWindow) {
         _logger.info(
-          '[${data.objectId}] 过滤推送数据: personId=$personId, recordType=${data.recordType}, 时间差=${timeDiff}ms < ${filterWindow}ms',
+          '[${data.objectId}] 过滤推送数据: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 时间差=${timeDiff}ms < ${filterWindow}ms',
         );
         return true; // 过滤掉
       } else {
         _logger.info(
-          '[${data.objectId}] 时间已过期，允许推送: personId=$personId, recordType=${data.recordType}, 时间差=${timeDiff}ms >= ${filterWindow}ms',
+          '[${data.objectId}] 时间已过期，允许推送: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 时间差=${timeDiff}ms >= ${filterWindow}ms',
         );
       }
     } else {
-      _logger.info('[${data.objectId}] 新人员，允许推送: personId=$personId, recordType=${data.recordType}');
+      _logger.info('[${data.objectId}] 新人员，允许推送: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}');
     }
 
     // 更新最后推送时间
     _lastPersonTime[personId] = currentTime;
-    // 同时记录人员类型，用于精确清理
-    _personRecordTypes[personId] = data.recordType;
     _logger.info(
-      '[${data.objectId}] 更新最后推送时间: personId=$personId, recordType=${data.recordType}, 时间=$currentTime',
+      '[${data.objectId}] 更新最后推送时间: personId=$personId (objectId=${data.objectId}_${data.recordType}), recordType=${data.recordType}, 时间=$currentTime',
     );
     return false;
   }
@@ -268,14 +266,12 @@ class PushProvider with ChangeNotifier {
     return {
       'pushDataCount': _pushData.length,
       'filterRecordCount': _lastPersonTime.length,
-      'personRecordTypesCount': _personRecordTypes.length,
       'displayTimersCount': _displayTimers.length,
       'displayStartTimeCount': _displayStartTime.length,
       'isRunning': _running,
       'currentUserId': _currentUserId,
       'error': _error,
       'lastPersonTime': Map.from(_lastPersonTime),
-      'personRecordTypes': Map.from(_personRecordTypes),
     };
   }
 
@@ -317,7 +313,10 @@ class PushProvider with ChangeNotifier {
 
     _lastPersonTime.forEach((personId, lastTime) {
       final timeDiff = currentTime - lastTime;
-      final recordType = _personRecordTypes[personId];
+      
+      // 从personId中提取recordType（格式：objectId_recordType）
+      final parts = personId.split('_');
+      final recordType = parts.length > 1 ? parts.last : kRecordTypeNormal;
 
       // 根据人员类型获取对应的过滤时间窗口
       int filterTimeWindow;
@@ -343,7 +342,6 @@ class PushProvider with ChangeNotifier {
 
     for (final key in expiredKeys) {
       _lastPersonTime.remove(key);
-      _personRecordTypes.remove(key); // 同时清理类型记录
     }
     print('清理了 ${expiredKeys.length} 个过期的过滤记录');
   }
@@ -352,7 +350,6 @@ class PushProvider with ChangeNotifier {
   void clearAllFilters() {
     final count = _lastPersonTime.length;
     _lastPersonTime.clear();
-    _personRecordTypes.clear(); // 同时清理类型记录
     print('清空了所有过滤记录，共 $count 条');
   }
 
