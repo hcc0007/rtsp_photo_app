@@ -295,6 +295,19 @@ class PushProvider with ChangeNotifier {
     };
   }
 
+  /// 调试方法：验证过滤时间配置
+  Future<void> logFilterTimeConfig() async {
+    final strangerFilterTime = await AppConfig.getStrangerFilterTimeWindow();
+    final normalFilterTime = await AppConfig.getNormalPersonFilterTimeWindow();
+    
+    _logger.info('=== 过滤时间配置验证 ===');
+    _logger.info('陌生人过滤时间窗口: ${strangerFilterTime}ms');
+    _logger.info('白名单人员过滤时间窗口: ${normalFilterTime}ms');
+    _logger.info('当前过滤记录数量: ${_lastPersonTime.length}');
+    _logger.info('过滤记录详情: ${_lastPersonTime}');
+    _logger.info('========================');
+  }
+
   /// 调试方法：清空所有数据
   void clearAllData() {
     print('清空所有推送数据');

@@ -29,6 +29,7 @@ class AppConfig {
     'logToFile': false,
     'logMaxFileSize': 10 * 1024 * 1024,
     'logMaxFileCount': 5,
+    'logMaxCount': 10000,
     'company': '云南省委',
     'videoAspectRatio': 16 / 9,
     'videoSectionRatio': 0.3,
@@ -37,35 +38,44 @@ class AppConfig {
   static String company = '云南省委';
 
   // 人脸推送过滤配置
-  static int strangerDisplayTime = 10000; // 陌生人显示时间（毫秒）
-  static int normalPersonDisplayTime = 5000; // 白名单人员显示时间（毫秒）
+  static int strangerDisplayTime =
+      _default['strangerDisplayTime']; // 陌生人显示时间（毫秒）
+  static int normalPersonDisplayTime =
+      _default['normalPersonDisplayTime']; // 白名单人员显示时间（毫秒）
 
   // 根据人员类型的过滤时间窗口配置
-  static int strangerFilterTimeWindow = 30000; // 陌生人过滤时间窗口（毫秒）
-  static int normalPersonFilterTimeWindow = 45000; // 白名单人员过滤时间窗口（毫秒）
+  static int strangerFilterTimeWindow =
+      _default['strangerFilterTimeWindow']; // 陌生人过滤时间窗口（毫秒）
+  static int normalPersonFilterTimeWindow =
+      _default['normalPersonFilterTimeWindow']; // 白名单人员过滤时间窗口（毫秒）
 
   // 展示数量限制配置
-  static int normalPersonMaxDisplayCount = 5; // 白名单人员最大展示数量
-  static int strangerMaxDisplayCount = 5; // 陌生人最大展示数量
+  static int normalPersonMaxDisplayCount =
+      _default['normalPersonMaxDisplayCount']; // 白名单人员最大展示数量
+  static int strangerMaxDisplayCount =
+      _default['strangerMaxDisplayCount']; // 陌生人最大展示数量
+
+  // 日志配置
+  static int logMaxCount = _default['logMaxCount']; // 日志最大数量
 
   // 服务器地址
-  static String apiUrl = 'http://192.168.3.169';
-  static String apiPort = '8080';
+  static String apiUrl = _default['apiUrl'];
+  static String apiPort = _default['apiPort'];
 
   // RTSP配置
-  static String defaultRtspUrl = 'rtsp://192.168.3.169:8554/mystream';
+  static String defaultRtspUrl = _default['defaultRtspUrl'];
 
   // 认证配置
-  static String username = 'ops';
-  static String password = 'Test@001';
-  static String token = '';
+  static String username = _default['username'];
+  static String password = _default['password'];
+  static String token = _default['token'];
 
   // 刷新间隔配置
-  static int photoRefreshInterval = 1000; // 1秒
-  static int photoAutoPlayInterval = 3000; // 3秒
-  static int tokenRefreshInterval = 25 * 60 * 1000; // 25分钟（在30分钟过期前刷新）
-  static int connectTimeout = 100000; // 连接超时时间
-  static int receiveTimeout = 100000; // 接收超时时间
+  static int photoRefreshInterval = _default['photoRefreshInterval']; // 1秒
+  static int photoAutoPlayInterval = _default['photoAutoPlayInterval']; // 3秒
+  static int tokenRefreshInterval = _default['tokenRefreshInterval']; // 25分钟（在30分钟过期前刷新）
+  static int connectTimeout = _default['connectTimeout']; // 连接超时时间
+  static int receiveTimeout = _default['receiveTimeout']; // 接收超时时间
 
   // 视频播放配置
   static const double videoAspectRatio = 16 / 9;
@@ -94,6 +104,9 @@ class AppConfig {
       'normal_person_max_display_count';
   static const String _keyStrangerMaxDisplayCount =
       'stranger_max_display_count';
+
+  // 日志配置键名
+  static const String _keyLogMaxCount = 'log_max_count';
 
   // Logger配置常量
   static const String _keyLogLevel = 'log_level';
@@ -171,6 +184,13 @@ class AppConfig {
         _default['strangerMaxDisplayCount'],
       );
 
+      // 设置日志配置默认值
+      await _setDefaultIfNotExists(
+        prefs,
+        _keyLogMaxCount,
+        _default['logMaxCount'],
+      );
+
       // 用户名、密码、token
       await _setDefaultIfNotExists(prefs, _keyUserName, _default['username']);
       await _setDefaultIfNotExists(prefs, _keyPassword, _default['password']);
@@ -215,10 +235,15 @@ class AppConfig {
     normalPersonFilterTimeWindow = await getNormalPersonFilterTimeWindow();
     normalPersonMaxDisplayCount = await getNormalPersonMaxDisplayCount();
     strangerMaxDisplayCount = await getStrangerMaxDisplayCount();
+    logMaxCount = await getLogMaxCount();
     // 同步 userName、password、token
     username = await getUserName();
     password = await getPassword();
     token = await getToken();
+
+    _logger.info(
+      'AppConfig更新完成 - 过滤时间窗口: 陌生人=${strangerFilterTimeWindow}ms, 白名单=${normalPersonFilterTimeWindow}ms',
+    );
   }
 
   // 设置默认值（如果不存在）
@@ -247,6 +272,11 @@ class AppConfig {
     _logger.info('RTSP地址: ${await getRtspUrl()}');
     _logger.info('陌生人显示时间: ${await getStrangerDisplayTime()}ms');
     _logger.info('白名单人员显示时间: ${await getNormalPersonDisplayTime()}ms');
+    _logger.info('陌生人过滤时间窗口: ${await getStrangerFilterTimeWindow()}ms');
+    _logger.info('白名单人员过滤时间窗口: ${await getNormalPersonFilterTimeWindow()}ms');
+    _logger.info('陌生人最大展示数量: ${await getStrangerMaxDisplayCount()}');
+    _logger.info('白名单人员最大展示数量: ${await getNormalPersonMaxDisplayCount()}');
+    _logger.info('日志最大数量: ${await getLogMaxCount()}');
   }
 
   // 重置所有配置为默认值
@@ -291,6 +321,9 @@ class AppConfig {
         _keyStrangerMaxDisplayCount,
         _default['strangerMaxDisplayCount'],
       );
+
+      // 重置日志配置
+      await prefs.setInt(_keyLogMaxCount, _default['logMaxCount']);
 
       updateAppConfig();
 
@@ -446,6 +479,19 @@ class AppConfig {
     }
   }
 
+  // 获取日志最大数量
+  static Future<int> getLogMaxCount() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final value = prefs.getInt(_keyLogMaxCount) ?? _default['logMaxCount'];
+      _logger.fine('获取日志最大数量: $value');
+      return value;
+    } catch (e) {
+      _logger.warning('获取日志最大数量失败，使用默认值', e);
+      return _default['logMaxCount'];
+    }
+  }
+
   // 设置服务器地址
   static Future<void> setServerUrl(String value) async {
     try {
@@ -559,6 +605,19 @@ class AppConfig {
       _logger.info('设置陌生人最大展示数量: $value');
     } catch (e) {
       _logger.severe('设置陌生人最大展示数量失败', e);
+      rethrow;
+    }
+  }
+
+  // 设置日志最大数量
+  static Future<void> setLogMaxCount(int value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_keyLogMaxCount, value);
+      logMaxCount = value;
+      _logger.info('设置日志最大数量: $value');
+    } catch (e) {
+      _logger.severe('设置日志最大数量失败', e);
       rethrow;
     }
   }

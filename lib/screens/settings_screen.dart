@@ -33,6 +33,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // 陌生人 - 最大展示数量
   final _strangerMaxDisplayController = TextEditingController();
 
+  // 日志最大数量
+  final _logMaxCountController = TextEditingController();
+
   bool _isLoading = true;
 
   @override
@@ -61,6 +64,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           .toString();
       _strangerMaxDisplayController.text = AppConfig.strangerMaxDisplayCount
           .toString();
+      _logMaxCountController.text = AppConfig.logMaxCount.toString();
     } catch (e) {
       print('加载设置失败: $e');
     }
@@ -91,6 +95,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     await AppConfig.setStrangerMaxDisplayCount(
       int.parse(_strangerMaxDisplayController.text),
+    );
+    await AppConfig.setLogMaxCount(
+      int.parse(_logMaxCountController.text),
     );
 
     // 重新初始化AppConfig以使用新的配置
@@ -406,6 +413,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 24),
+            const Text(
+              '日志配置',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _logMaxCountController,
+              style: const TextStyle(color: Colors.black),
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: '日志最大数量',
+                labelStyle: const TextStyle(color: Colors.grey),
+                hintText: '10000',
+                hintStyle: const TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: AppConfig.theme!),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -423,6 +462,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _normalPersonFilterTimeController.dispose();
     _normalPersonMaxDisplayController.dispose();
     _strangerMaxDisplayController.dispose();
+    _logMaxCountController.dispose();
     super.dispose();
   }
 }
