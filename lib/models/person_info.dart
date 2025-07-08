@@ -462,6 +462,7 @@ class Portrait {
   final String? activationTime;
   final String? expirationTime;
   final String? activeState;
+  final String? avatarShow;
 
   Portrait({
     this.portraitId,
@@ -479,6 +480,7 @@ class Portrait {
     this.activationTime,
     this.expirationTime,
     this.activeState,
+    this.avatarShow,
   });
 
   factory Portrait.fromJson(Map<String, dynamic> json) {
@@ -498,6 +500,7 @@ class Portrait {
       activationTime: json['activationTime']?.toString(),
       expirationTime: json['expirationTime']?.toString(),
       activeState: json['activeState']?.toString(),
+      avatarShow: json['avatarShow']?.toString(),
     );
   }
 }
