@@ -582,9 +582,16 @@ class FaceCardWithDynamicColor extends StatelessWidget {
         ? pushData.particular.portrait.avatarShow ?? pushData.particular.portrait.picUrl
         : pushData.portraitImage.url;
 
-    // 添加调试日志
+    // 优化调试日志 - 详细显示图片URL来源信息
+    final avatarShow = pushData.particular.portrait.avatarShow;
+    final picUrl = pushData.particular.portrait.picUrl;
+    final portraitImageUrl = pushData.portraitImage.url;
+    
     _logger.info(
-      '[DEBUG] FaceCard构建: objectId=${pushData.objectId}, imageUrl=$imageUrl, name=$name, recordType=$recordType',
+      '[DEBUG] FaceCard构建: objectId=${pushData.objectId}, recordType=$recordType, name=$name',
+    );
+    _logger.info(
+      '[DEBUG] 图片URL详情: 最终使用=$imageUrl, avatarShow=$avatarShow, picUrl=$picUrl, portraitImageUrl=$portraitImageUrl',
     );
 
     return FutureBuilder<Color>(

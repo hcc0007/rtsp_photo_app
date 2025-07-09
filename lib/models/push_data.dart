@@ -263,6 +263,7 @@ class PushData extends PersonInfo {
               ?.toString(),
           activeState: json['particular']?['portrait']?['activeState']
               ?.toString(),
+          avatarShow: json['particular']?['portrait']?['avatarShow']?.toString(),
         ),
       ),
       applet: Applet(
