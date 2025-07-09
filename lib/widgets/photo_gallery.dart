@@ -586,7 +586,7 @@ class FaceCardWithDynamicColor extends StatelessWidget {
 
     // 根据类型，展示不同图片
     final imageUrl = recordType == kRecordTypeNormal
-        ? avatarShow ?? picUrl
+        ? avatarShow == '' || avatarShow == null ? picUrl : avatarShow
         : portraitImageUrl;
 
     _logger.info(
