@@ -581,18 +581,16 @@ class FaceCardWithDynamicColor extends StatelessWidget {
 
     // 优化调试日志 - 详细显示图片URL来源信息
     final avatarShow = pushData.particular.portrait.avatarShow;
+    final picUrl = pushData.particular.portrait.picUrl;
     final portraitImageUrl = pushData.portraitImage.url;
 
     // 根据类型，展示不同图片
     final imageUrl = recordType == kRecordTypeNormal
-        ? avatarShow
+        ? avatarShow ?? picUrl
         : portraitImageUrl;
 
     _logger.info(
-      '[${pushData.objectId}] FaceCard构建: objectId=${pushData.objectId}, recordType=$recordType, name=$name',
-    );
-    _logger.info(
-      '[${pushData.objectId}] 图片URL详情: 最终使用=$imageUrl, avatarShow=$avatarShow, portraitImageUrl=$portraitImageUrl',
+      '[${pushData.objectId}] FaceCard构建 recordType=$recordType, name=$name\n图片URL详情: 最终使用=$imageUrl, avatarShow=$avatarShow, picUrl=$picUrl, portraitImageUrl=$portraitImageUrl',
     );
 
     return FutureBuilder<Color>(
@@ -628,7 +626,7 @@ class FaceCardWithDynamicColor extends StatelessWidget {
                   border: Border.all(color: Colors.white, width: 5),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
+                      color: Colors.black.withValues(alpha: 0.2), 
                       blurRadius: 3,
                       offset: Offset(0, 1),
                     ),
