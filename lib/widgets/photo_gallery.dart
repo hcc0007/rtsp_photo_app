@@ -350,7 +350,7 @@ class _StableGridViewState extends State<StableGridView>
       for (final data in _displayData) {
         final objectId = data.objectId;
         // 不为要移除的数据创建移动动画
-        if (!toRemoveIds.contains(objectId) && 
+        if (!toRemoveIds.contains(objectId) &&
             (!_isAnimating.containsKey(objectId) || !_isAnimating[objectId]!)) {
           _createShiftAnimation(objectId);
         }
@@ -409,7 +409,7 @@ class _StableGridViewState extends State<StableGridView>
       final data = _pendingData.removeAt(0);
       _displayData.add(data);
       print('从等待队列插入数据: ${data.objectId}');
-      
+
       if (!_isAnimating.containsKey(data.objectId) ||
           !_isAnimating[data.objectId]!) {
         _createEnterAnimation(data.objectId);
@@ -459,10 +459,10 @@ class _StableGridViewState extends State<StableGridView>
       _displayData.removeWhere((data) => data.objectId == objectId);
       _animationControllers.remove(objectId);
       _isAnimating.remove(objectId);
-      
+
       // 检查等待队列，如果有数据且当前显示数量小于最大数量，则插入
       _processPendingData();
-      
+
       setState(() {});
     });
 
@@ -537,7 +537,8 @@ class AnimatedFaceCard extends StatelessWidget {
               ? value /
                     0.6 // 前60%的时间完成透明度动画
               : 1.0; // 之后保持不透明
-        } else if (animationController != null && animationController!.value > 0) {
+        } else if (animationController != null &&
+            animationController!.value > 0) {
           // 向左移动动画：向左移动一个网格位置
           slideOffset = -(animationController!.value) * 0.2; // 向左移动20%的屏幕宽度
           opacity = 1.0; // 保持不透明
@@ -577,21 +578,21 @@ class FaceCardWithDynamicColor extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = pushData.name;
     final recordType = pushData.recordType;
-    // 根据类型，展示不同图片
-    final imageUrl = recordType == kRecordTypeNormal
-        ? pushData.particular.portrait.avatarShow ?? pushData.particular.portrait.picUrl
-        : pushData.portraitImage.url;
 
     // 优化调试日志 - 详细显示图片URL来源信息
     final avatarShow = pushData.particular.portrait.avatarShow;
-    final picUrl = pushData.particular.portrait.picUrl;
     final portraitImageUrl = pushData.portraitImage.url;
-    
+
+    // 根据类型，展示不同图片
+    final imageUrl = recordType == kRecordTypeNormal
+        ? avatarShow
+        : portraitImageUrl;
+
     _logger.info(
-      '[DEBUG] FaceCard构建: objectId=${pushData.objectId}, recordType=$recordType, name=$name',
+      '[${pushData.objectId}] FaceCard构建: objectId=${pushData.objectId}, recordType=$recordType, name=$name',
     );
     _logger.info(
-      '[DEBUG] 图片URL详情: 最终使用=$imageUrl, avatarShow=$avatarShow, picUrl=$picUrl, portraitImageUrl=$portraitImageUrl',
+      '[${pushData.objectId}] 图片URL详情: 最终使用=$imageUrl, avatarShow=$avatarShow, portraitImageUrl=$portraitImageUrl',
     );
 
     return FutureBuilder<Color>(
@@ -634,19 +635,10 @@ class FaceCardWithDynamicColor extends StatelessWidget {
                   ],
                 ),
                 child: ClipOval(
-                  child: imageUrl != null && imageUrl.isNotEmpty
-                      ? SenseImage(
-                          objectKey: imageUrl,
-                          id: 'objectId_${pushData.objectId}',
-                        )
-                      : Container(
-                          color: Colors.grey[300],
-                          child: Icon(
-                            Icons.person,
-                            size: 30,
-                            color: Colors.white,
-                          ),
-                        ),
+                  child: SenseImage(
+                    objectKey: imageUrl ?? '',
+                    id: 'objectId_${pushData.objectId}',
+                  ),
                 ),
               ),
 

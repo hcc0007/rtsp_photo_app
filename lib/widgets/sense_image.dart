@@ -152,6 +152,28 @@ class _SenseImageState extends State<SenseImage> {
 
       if (response.data != null && response.data is List<int>) {
         final imageData = Uint8List.fromList(response.data);
+        
+        // 验证图片数据有效性
+        if (imageData.length < 10) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = '图片数据太小，可能不是有效图片 (${imageData.length} 字节)';
+          });
+          _logger.severe('[${widget.id ?? _ts}] 图片加载失败：$_errorMessage');
+          return;
+        }
+        
+        // 检查是否为常见图片格式的魔数
+        final isValidImage = _isValidImageData(imageData);
+        if (!isValidImage) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = '图片数据格式无效，可能不是图片文件';
+          });
+          _logger.severe('[${widget.id ?? _ts}] 图片加载失败：$_errorMessage');
+          return;
+        }
+        
         setState(() {
           _imageBytes = imageData;
           _isLoading = false;
@@ -177,6 +199,13 @@ class _SenseImageState extends State<SenseImage> {
         _errorMessage = '$e\n$stack';
       });
       _logger.severe('[${widget.id ?? _ts}] 图片加载失败: $_errorMessage');
+      
+      // 记录详细的错误信息用于调试
+      _logger.severe('[${widget.id ?? _ts}] 错误详情:');
+      _logger.severe('[${widget.id ?? _ts}] - URL: $url');
+      _logger.severe('[${widget.id ?? _ts}] - ObjectKey: ${widget.objectKey}');
+      _logger.severe('[${widget.id ?? _ts}] - Token: ${token?.substring(0, token.length > 10 ? 10 : token.length)}...');
+      _logger.severe('[${widget.id ?? _ts}] - 错误类型: ${e.runtimeType}');
     }
   }
 
@@ -189,6 +218,41 @@ class _SenseImageState extends State<SenseImage> {
       _lastObjectKey = widget.objectKey;
       _loadImage();
     }
+  }
+
+  /// 验证图片数据是否为有效的图片格式
+  bool _isValidImageData(Uint8List data) {
+    if (data.length < 4) return false;
+    
+    // 检查常见图片格式的魔数
+    // JPEG: FF D8 FF
+    if (data.length >= 3 && data[0] == 0xFF && data[1] == 0xD8 && data[2] == 0xFF) {
+      return true;
+    }
+    
+    // PNG: 89 50 4E 47
+    if (data.length >= 4 && data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47) {
+      return true;
+    }
+    
+    // GIF: 47 49 46 38 (GIF8)
+    if (data.length >= 4 && data[0] == 0x47 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x38) {
+      return true;
+    }
+    
+    // WebP: 52 49 46 46 ... 57 45 42 50
+    if (data.length >= 12 && 
+        data[0] == 0x52 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x46 &&
+        data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50) {
+      return true;
+    }
+    
+    // 如果不是已知格式，记录前几个字节用于调试
+    final hexBytes = data.take(8).map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
+    _logger.warning('[${widget.id ?? _ts}] 未知图片格式，前8字节: $hexBytes');
+    
+    // 对于未知格式，暂时允许通过（可能是其他格式）
+    return true;
   }
 
   @override
@@ -267,6 +331,12 @@ class _SenseImageState extends State<SenseImage> {
       fit: widget.fit,
       errorBuilder: (context, error, stackTrace) {
         _logger.severe('[${widget.id ?? _ts}] Image.memory 渲染失败: $error');
+        _logger.severe('[${widget.id ?? _ts}] 渲染失败详情:');
+        _logger.severe('[${widget.id ?? _ts}] - ObjectKey: ${widget.objectKey}');
+        _logger.severe('[${widget.id ?? _ts}] - 数据大小: ${_imageBytes!.length} 字节');
+        _logger.severe('[${widget.id ?? _ts}] - 前8字节: ${_imageBytes!.take(8).map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+        _logger.severe('[${widget.id ?? _ts}] - 错误类型: ${error.runtimeType}');
+        
         return Container(
           width: widget.width,
           height: widget.height,
@@ -279,6 +349,11 @@ class _SenseImageState extends State<SenseImage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.person, size: 48, color: Colors.grey[600]),
+                SizedBox(height: 4),
+                Text(
+                  '图片加载失败',
+                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                ),
               ],
             ),
           ),

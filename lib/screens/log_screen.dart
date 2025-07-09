@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:rtsp_photo_app/config/app_config.dart';
 import 'dart:async';
 import '../utils/global_log_manager.dart';
 
@@ -54,6 +55,7 @@ class _LogScreenState extends State<LogScreen> {
       appBar: AppBar(
         title: const Text('日志记录'),
         foregroundColor: Colors.white,
+        backgroundColor: AppConfig.theme,
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
